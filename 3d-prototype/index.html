@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#203b42">
+<title>Kingdom Journey | 3D Inn Prototype</title>
+<style>
+:root{color-scheme:dark;--cream:#fff3d7;--gold:#f5cc72;--panel:rgba(22,39,42,.88)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#b6d8c5;font-family:Georgia,"Times New Roman",serif;touch-action:none}
+canvas{display:block;width:100%;height:100%}
+#hud{position:fixed;inset:0;pointer-events:none;color:var(--cream)}
+.topbar{position:absolute;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.brand,.hint,.toast{background:var(--panel);border:1px solid #fff3d744;border-radius:15px;padding:10px 13px;box-shadow:0 5px 20px #142d2d30;backdrop-filter:blur(8px)}
+.brand strong{display:block;font-size:17px;letter-spacing:.04em;color:var(--gold)}
+.brand span{font-size:12px;opacity:.88}
+.hint{max-width:220px;font-size:13px;line-height:1.35}
+#message{position:absolute;top:23%;left:50%;transform:translateX(-50%);width:min(90%,440px);text-align:center;background:var(--panel);border:1px solid #f5cc7280;border-radius:18px;padding:16px 18px;display:none;box-shadow:0 12px 35px #18333050}
+#message h2{margin:0 0 7px;color:var(--gold);font-size:23px}
+#message p{margin:0;line-height:1.45;font-size:15px}
+#controls{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 18px;pointer-events:auto}
+#stickZone{width:132px;height:132px;border-radius:50%;background:#1a353b55;border:2px solid #fff3d777;position:relative;touch-action:none;box-shadow:0 5px 20px #1a353b25}
+#stick{position:absolute;width:54px;height:54px;left:37px;top:37px;border-radius:50%;background:#f5cc72dd;border:2px solid #fff3d7;box-shadow:0 3px 10px #142d2d55;pointer-events:none}
+.rightControls{display:flex;flex-direction:column;align-items:center;gap:10px}
+.controlButton{border:1px solid #fff3d7aa;background:#1a353bd9;color:var(--cream);border-radius:18px;padding:13px 16px;font: bold 14px Georgia,serif;box-shadow:0 5px 18px #142d2d30;min-width:100px;touch-action:manipulation}
+.controlButton:active{transform:translateY(2px);background:#34575a}
+#interact{background:#8a6125eF;color:#fff5df;border-color:#ffe2a1;min-width:112px}
+#footer{position:absolute;bottom:calc(160px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);font:12px system-ui,sans-serif;color:#173a3a;background:#f8f0d9cc;border-radius:20px;padding:6px 10px;white-space:nowrap}
+@media(min-width:760px){#controls{padding:0 28px 14px}#stickZone{opacity:.72}#footer{bottom:18px;left:auto;right:28px;transform:none}.hint{max-width:280px}}
+@media(max-height:520px){#stickZone{width:100px;height:100px}#stick{left:25px;top:25px;width:46px;height:46px}#footer{display:none}.controlButton{padding:9px 12px}}
+</style>
+</head>
+<body>
+<div id="hud">
+  <div class="topbar">
+    <div class="brand"><strong>✦ KINGDOM JOURNEY</strong><span>3D field test · The Inn at Bethlehem</span></div>
+    <div class="hint">Walk the path to the inn. Find the glowing doorway, then tap <b>Enter Inn</b>.</div>
+  </div>
+  <div id="message"><h2>Welcome, traveler</h2><p>The innkeeper’s lantern is lit. This 3D scene is a first step toward the larger journey.</p></div>
+  <div id="controls">
+    <div id="stickZone" aria-label="Movement joystick"><div id="stick"></div></div>
+    <div class="rightControls">
+      <button class="controlButton" id="interact">Enter Inn</button>
+      <button class="controlButton" id="reset">Reset View ↻</button>
+    </div>
+  </div>
+  <div id="footer">Desktop: WASD / arrow keys · Mobile: drag the gold joystick</div>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#b7d8c7');
+scene.fog = new THREE.Fog('#b7d8c7', 24, 62);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 150);
+const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.prepend(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight('#fff2d4','#526b58',2.0));
+const sun = new THREE.DirectionalLight('#fff0cb',2.6);
+sun.position.set(-9,16,7); sun.castShadow=true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left=-20;sun.shadow.camera.right=20;sun.shadow.camera.top=20;sun.shadow.camera.bottom=-20;
+scene.add(sun);
+
+const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness});
+const materials={
+ grass:mat('#83ad79'), grass2:mat('#a5c88b'), path:mat('#cbb58c'), stone:mat('#9e9b83'),
+ wall:mat('#e5cda0'), wallShade:mat('#c4a77c'), wood:mat('#6c4934'), darkWood:mat('#3d3029'),
+ roof:mat('#8c5140'), roofLight:mat('#ad6950'), trim:mat('#f4e4bd'), leaf:mat('#477c58'),
+ leaf2:mat('#67945e'), trunk:mat('#79543a'), gold:mat('#ffc75e'), cloth:mat('#9f4b3e'),
+ skin:mat('#dca77c'), hair:mat('#49382f'), trousers:mat('#526b72'), boot:mat('#47362e')
+};
+function mesh(geo,material,x,y,z, parent=scene){const m=new THREE.Mesh(geo,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
+function box(w,h,d,material,x,y,z,parent=scene){return mesh(new THREE.BoxGeometry(w,h,d),material,x,y,z,parent)}
+function cylinder(rt,rb,h,material,x,y,z,segments=8,parent=scene){return mesh(new THREE.CylinderGeometry(rt,rb,h,segments),material,x,y,z,parent)}
+function sphere(r,material,x,y,z,parent=scene,detail=0){return mesh(new THREE.IcosahedronGeometry(r,detail),material,x,y,z,parent)}
+
+const ground=box(120,.35,120,materials.grass,0,-.24,0);ground.receiveShadow=true;
+// Soft rolling hills, made from low-poly mounds.
+for(let i=0;i<13;i++){const x=(i%5-2)*13+(Math.random()-.5)*4,z=-17-Math.floor(i/5)*13;const h=2+Math.random()*3;const hill=sphere(1, i%3?materials.grass2:materials.grass,x,h*.35,z,scene,1);hill.scale.set(7+Math.random()*3,h,5+Math.random()*3);hill.castShadow=false;}
+// A winding sandy approach.
+const path=box(4,.08,23,materials.path,0,.0,2);path.rotation.y=-.12;
+for(let i=0;i<12;i++){const s=box(.38,.09,.55,materials.stone,Math.sin(i*.8)*.65,.06,11-i*1.7);s.rotation.y=(i%2-.5)*.2;}
+// Inn structure, facing south toward the player.
+box(9,4.5,5,materials.wall,0,2.25,-7);
+box(9.35,.22,5.3,materials.wood,0,4.42,-7);
+// triangular gable roofs
+const roof1=mesh(new THREE.ConeGeometry(6.1,3.3,4),materials.roof,0,5.75,-7);
+roof1.rotation.y=Math.PI/4; roof1.scale.set(1.05,1,0.72);
+box(2.2,3.0,.2,materials.darkWood,0,1.55,-4.42);
+box(2.55,.22,.25,materials.wood,0,3.12,-4.38);
+box(.1,2.7,.1,materials.gold,0,1.7,-4.28);
+for(const x of [-3.1,3.1]){
+  box(1.25,1.35,.14,materials.wood,x,2.6,-4.35);
+  box(.95,1.05,.1,materials.gold,x,2.62,-4.25);
+  box(1.05,.09,.12,materials.trim,x,2.62,-4.18);
+  box(.09,1.1,.12,materials.trim,x,2.62,-4.18);
+}
+for(const x of [-4.1,4.1]){box(.22,4.7,.28,materials.wood,x,2.35,-4.32)}
+// Porch awning and posts.
+box(4.7,.18,1.5,materials.wood,0,3.55,-3.85);
+for(const x of [-2.15,2.15])cylinder(.09,.12,3.3,materials.wood,x,1.9,-3.25,8);
+const sign=box(2.4,.65,.12,materials.wood,0,4.15,-3.5);
+box(2.15,.42,.04,materials.trim,0,4.15,-3.41);
+box(.1,.25,.06,materials.gold,0,4.15,-3.36);
+// Lanterns and warm light.
+for(const x of [-2.7,2.7]){
+  box(.12,.65,.12,materials.darkWood,x,3.1,-3.85);
+  const lamp=box(.35,.42,.32,materials.gold,x,2.8,-3.85);
+  const glow=new THREE.PointLight('#ffbd58',1.3,5);glow.position.set(x,2.7,-3.7);scene.add(glow);
+}
+// Side barrels, crates, flower beds.
+for(const [x,z] of [[-5,-4],[5,-4],[-5,-9],[5,-9]]){
+  cylinder(.42,.5,.9,materials.wood,x,.45,z,9);
+  cylinder(.43,.43,.09,materials.darkWood,x,.3,z,9);
+  cylinder(.43,.43,.09,materials.darkWood,x,.65,z,9);
+}
+for(let i=0;i<18;i++){
+ const x=(i%2?1:-1)*(6.2+Math.random()*2),z=-2-Math.random()*13;
+ const stem=cylinder(.04,.06,.6,materials.leaf,x,.3,z,5);
+ sphere(.2, i%2?materials.leaf:materials.leaf2,x,.7,z,scene,1);
+}
+// Stylized trees.
+function tree(x,z,size=1){
+ cylinder(.22*size,.32*size,1.8*size,materials.trunk,x,.9*size,z,7);
+ const a=sphere(1.05*size,materials.leaf,x,2.0*size,z,scene,1);a.scale.set(1,1.15,.95);
+ const b=sphere(.75*size,materials.leaf2,x+.42*size,2.5*size,z-.12*size,scene,1);
+}
+[[-10,-5],[-12,-13],[10,-8],[12,-17],[-8,-20],[7,3],[14,1]].forEach((p,i)=>tree(p[0],p[1],.8+(i%3)*.18));
+// Distant little cottages add storybook scale.
+function cottage(x,z,scale=1){
+ const g=new THREE.Group();scene.add(g);g.position.set(x,0,z);g.scale.setScalar(scale);
+ box(3,2.4,2.7,materials.wallShade,0,1.2,0,g);
+ const r=mesh(new THREE.ConeGeometry(2.35,1.6,4),materials.roof,0,3,0,g);r.rotation.y=Math.PI/4;r.scale.z=.8;
+ box(.65,1.2,.08,materials.darkWood,0,.65,1.38,g);
+}
+cottage(-13,-1,.9);cottage(14,-3,.8);cottage(12,-25,1.15);
+
+// Player: simple friendly low-poly traveler.
+const player=new THREE.Group();scene.add(player);player.position.set(0,0,7);
+const body=new THREE.Group();player.add(body);
+cylinder(.34,.43,.9,materials.cloth,0,1.05,0,7,body);
+sphere(.32,materials.skin,0,1.83,0,body,1);
+sphere(.34,materials.hair,0,2.0,-.08,body,1).scale.set(1,.65,1);
+const hat=cylinder(.37,.48,.12,materials.wood,0,2.15,0,7,body);
+const brim=cylinder(.5,.5,.07,materials.wood,0,2.1,0,9,body);
+box(.18,.55,.2,materials.trousers,-.18,.35,0,body);
+box(.18,.55,.2,materials.trousers,.18,.35,0,body);
+box(.23,.13,.34,materials.boot,-.18,.08,.05,body);
+box(.23,.13,.34,materials.boot,.18,.08,.05,body);
+const pack=box(.43,.52,.24,materials.wood,0,1.1,.35,body);
+box(.18,.12,.05,materials.gold,0,1.1,.49,body);
+// Face points forward toward -Z.
+sphere(.035,materials.darkWood,-.11,1.86,-.285,body);
+sphere(.035,materials.darkWood,.11,1.86,-.285,body);
+
+// Controls: keyboard + accessible touch joystick.
+const keys=new Set();
+addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());});
+addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+const zone=document.querySelector('#stickZone'),stick=document.querySelector('#stick');
+let pointer=null, joyX=0,joyY=0;
+function setJoy(e){
+ const r=zone.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+ let dx=(e.clientX-cx)/(r.width*.32),dy=(e.clientY-cy)/(r.height*.32);
+ const len=Math.hypot(dx,dy);if(len>1){dx/=len;dy/=len}
+ joyX=dx;joyY=dy;stick.style.transform=`translate(${dx*29}px,${dy*29}px)`;
+}
+zone.addEventListener('pointerdown',e=>{pointer=e.pointerId;zone.setPointerCapture(pointer);setJoy(e)});
+zone.addEventListener('pointermove',e=>{if(pointer===e.pointerId)setJoy(e)});
+function releaseJoy(){pointer=null;joyX=0;joyY=0;stick.style.transform='translate(0,0)'}
+zone.addEventListener('pointerup',releaseJoy);zone.addEventListener('pointercancel',releaseJoy);zone.addEventListener('lostpointercapture',releaseJoy);
+
+const message=document.querySelector('#message');
+let entered=false;
+const interactButton=document.querySelector('#interact');
+const doorPosition=new THREE.Vector3(0,0,-3.9);
+function nearDoor(){return player.position.distanceTo(doorPosition)<3.4}
+function interact(){
+ if(nearDoor()){
+   entered=!entered;
+   message.querySelector('h2').textContent=entered?'Welcome, traveler':'The path awaits';
+   message.querySelector('p').textContent=entered
+     ?'The innkeeper’s lantern is lit. This 3D scene is a first step toward the larger journey.'
+     :'You step back outside, ready to continue your journey.';
+   message.style.display=entered?'block':'none';
+ }else{
+   message.querySelector('h2').textContent='The inn is ahead';
+   message.querySelector('p').textContent='Follow the stone path toward the glowing doorway. The button will be ready when you get close.';
+   message.style.display='block';
+   window.clearTimeout(window.kingdomHintTimer);
+   window.kingdomHintTimer=window.setTimeout(()=>{if(!entered)message.style.display='none'},2400);
+ }
+}
+interactButton.addEventListener('click',interact);
+document.querySelector('#reset').addEventListener('click',()=>{player.position.set(0,0,7);player.rotation.y=0;camera.position.set(0,5,15);entered=false;message.style.display='none';});
+message.addEventListener('click',()=>{message.style.display='none'});
+// Lightweight collision rules keep the traveler on the path and out of solid scenery.
+const solidRects=[
+ {x:0,z:-9.55,hx:4.65,hz:.28},      // back wall
+ {x:-4.65,z:-7,hx:.28,hz:2.6},      // side walls
+ {x:4.65,z:-7,hx:.28,hz:2.6},
+ {x:-2.85,z:-4.5,hx:1.65,hz:.28},   // front wall left of the doorway
+ {x:2.85,z:-4.5,hx:1.65,hz:.28},    // front wall right of the doorway
+ {x:-5,z:-4,hx:.65,hz:.65},{x:5,z:-4,hx:.65,hz:.65},
+ {x:-5,z:-9,hx:.65,hz:.65},{x:5,z:-9,hx:.65,hz:.65},
+ {x:-13,z:-1,hx:1.7,hz:1.6},{x:14,z:-3,hx:1.5,hz:1.4}
+];
+const solidCircles=[[-10,-5,.9],[-12,-13,1], [10,-8,1],[12,-17,1],[-8,-20,.9],[7,3,.9],[14,1,1.0]];
+function blockedAt(x,z){
+ for(const r of solidRects){
+  if(Math.abs(x-r.x)<r.hx+.28 && Math.abs(z-r.z)<r.hz+.25)return true;
+ }
+ for(const [tx,tz,r] of solidCircles){
+  if(Math.hypot(x-tx,z-tz)<r+.32)return true;
+ }
+ return false;
+}
+const clock=new THREE.Clock();
+const cameraTarget=new THREE.Vector3();
+const desiredCamera=new THREE.Vector3();
+const forward=new THREE.Vector3();
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),.04);
+ let x=(keys.has('a')||keys.has('arrowleft')?-1:0)+(keys.has('d')||keys.has('arrowright')?1:0)+joyX;
+ let z=(keys.has('w')||keys.has('arrowup')?-1:0)+(keys.has('s')||keys.has('arrowdown')?1:0)+joyY;
+ const len=Math.hypot(x,z);
+ if(len>.12){
+  x/=Math.max(1,len);z/=Math.max(1,len);
+  const speed=4.1;
+  const nextX=THREE.MathUtils.clamp(player.position.x+x*speed*dt,-18,18);
+  const nextZ=THREE.MathUtils.clamp(player.position.z+z*speed*dt,-24,16);
+  // Resolve axes separately so the player can slide along walls instead of sticking.
+  if(!blockedAt(nextX,player.position.z))player.position.x=nextX;
+  if(!blockedAt(player.position.x,nextZ))player.position.z=nextZ;
+  const angle=Math.atan2(-x,-z);
+  player.rotation.y=THREE.MathUtils.damp(player.rotation.y,angle,12,dt);
+  body.position.y=Math.abs(Math.sin(clock.elapsedTime*10))*.045;
+ }else{body.position.y=THREE.MathUtils.damp(body.position.y,0,8,dt)}
+ // Keep the action label honest: entry only activates near the doorway.
+ interactButton.textContent=nearDoor()?(entered?'Leave Inn':'Enter Inn'):'Walk to Inn';
+ // Camera stays behind the traveler and eases into position.
+ forward.set(Math.sin(player.rotation.y),0,Math.cos(player.rotation.y));
+ desiredCamera.set(player.position.x+forward.x*7,player.position.y+4.2,player.position.z+forward.z*7);
+ camera.position.lerp(desiredCamera,1-Math.exp(-4.5*dt));
+ cameraTarget.set(player.position.x,1.2,player.position.z-1.0);
+ camera.lookAt(cameraTarget);
+ renderer.render(scene,camera);
+}
+camera.position.set(0,5,15);animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));});
+</script>
+</body>
+</html>
