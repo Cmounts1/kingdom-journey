@@ -238,7 +238,7 @@ function openInventory(fromInn=false){
  render();
 }
 function openInnWelcome(){
- openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="innInventory">🎒 Check inventory</button><button id="ok">Begin the journey</button></div>`);
+ openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="innInventory">🎒 Check inventory</button><button id="ok">Leave the inn</button></div>`);
  $('ok').onclick=closeCard;
  $('innInventory').onclick=()=>openInventory(true);
 }
