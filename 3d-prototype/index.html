@@ -184,9 +184,11 @@ for(let i=0;i<18;i++){
 }
 // Stylized trees.
 function tree(x,z,size=1){
- cylinder(.22*size,.32*size,1.8*size,materials.trunk,x,.9*size,z,7);
- const a=sphere(1.05*size,materials.leaf,x,2.0*size,z,scene,1);a.scale.set(1,1.15,.95);
- const b=sphere(.75*size,materials.leaf2,x+.42*size,2.5*size,z-.12*size,scene,1);
+ // Keep path-side greenery compact so it cannot visually overwhelm or cover trails.
+ const shrubScale=.25*size;
+ cylinder(.22*shrubScale,.32*shrubScale,1.8*shrubScale,materials.trunk,x,.9*shrubScale,z,7);
+ const a=sphere(1.05*shrubScale,materials.leaf,x,2.0*shrubScale,z,scene,1);a.scale.set(1,1.15,.95);
+ const b=sphere(.75*shrubScale,materials.leaf2,x+.42*shrubScale,2.5*shrubScale,z-.12*shrubScale,scene,1);
 }
 [[-19,-9],[-23,-25],[20,-15],[23,-32],[-16,-38],[13,6],[28,3],[-28,-20],[31,-43]].forEach((p,i)=>tree(p[0],p[1],.8+(i%3)*.18));
 // Small enterable cottages with door openings and simple furnishings.
