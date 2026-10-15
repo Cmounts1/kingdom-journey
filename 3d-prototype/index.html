@@ -531,7 +531,7 @@ function animate(){
    rightArm.rotation.x=THREE.MathUtils.damp(rightArm.rotation.x,0,8,dt);
   }
  // Keep the action label honest: entry only activates near the doorway.
- const near=closestEntrance(),nearThing=nearestThing();
+ const near=closestEntrance(),nearThing=nearestAction();
   interactButton.textContent=entered?'Leave Building':near?'Enter Building':(nearThing&&nearThing.dist<2.65?'Talk / Interact':'Explore');
   // Fixed-angle follow camera: it tracks the traveler but never pans or rotates while walking.
   desiredCamera.copy(player.position).add(cameraOffset);
