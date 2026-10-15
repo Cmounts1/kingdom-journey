@@ -381,7 +381,7 @@ function openCard(content){card.innerHTML=content;overlay.style.display='flex'}
 function closeCard(){overlay.style.display='none'}
 overlay.addEventListener('click',e=>{if(e.target===overlay)closeCard()});
 function syncQuestItems(){
- ['traveler','helper','seeker'].forEach(p=>{if(questItemMeshes[p])questItemMeshes[p].visible=journeyPath===p&&sideQuestStarted&&!sideQuestDone&&sideQuestStep===0});
+ ['traveler','helper','seeker'].forEach(p=>{if(questItemMeshes[p])questItemMeshes[p].visible=journeyPath===p&&sideQuestStarted&&!sideQuestDone&&sideQuestStep===0;if(sideActors[p])sideActors[p].visible=journeyPath===p});
 }
 function closestEntrance(){
  let best=null,dBest=Infinity;
