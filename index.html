@@ -146,11 +146,16 @@ function interact(){
  else {scrollItems[n.index].got=true;scrolls++;xp+=5;save();toast('Scripture scroll collected! +5 XP');if(scrolls===3){openCard(`<div class="eyebrow">Journal updated</div><h2>Three scrolls collected!</h2><p>You have gathered every scroll scattered across the hillside. Take a moment to read Luke 2:8–20 and reflect on the story.</p><div class="bottomrow"><button id="ok">Continue</button></div>`);$('ok').onclick=closeCard}}
 }
 $('interact').addEventListener('click',interact);
-$(‘run’).addEventListener(‘click’,()=>{running=!running;$(‘run’).textContent=running?‘🏃 RUNNING’:‘🏃 WALK’;toast(running?‘Running enabled’:‘Walking enabled’)});
-$(‘journal’).addEventListener(‘click’,()=>{
-openCard(<div class="eyebrow">Your travel journal</div><h2>Kingdom Journey</h2><p><strong>Quest:</strong> ${questDone?'Complete':'The shepherds’ announcement'}</p><p><strong>Scripture:</strong> Luke 2:8–20</p><p><strong>Reflection:</strong> What might the shepherds have felt when they heard the announcement? What good news would you want to share?</p><p><strong>Progress:</strong> ${xp} XP · ${scrolls}/3 scrolls · Level ${1+Math.floor(xp/50)}</p><p style="font-size:12px;color:#655b49">Progress saves in this browser on this device.</p><div class="bottomrow"><button id="ok">Close journal</button><button id="resetSave" class="secondary">Reset progress</button></div>);
-$(‘ok’).onclick=closeCard;
-$(‘resetSave’).onclick=()=>{if(confirm(‘Reset all Kingdom Journey progress on this device?’)){localStorage.removeItem(‘kj-free-save’);location.reload()}};
+$('run').addEventListener('click',()=>{running=!running;$('run').textContent=running?'🏃 RUNNING':'🏃 WALK';toast(running?'Running enabled':'Walking enabled')});
+
+$('journal').addEventListener('click',()=>{
+
+  openCard(`<div class="eyebrow">Your travel journal</div><h2>Kingdom Journey</h2><p><strong>Quest:</strong> ${questDone?'Complete':'The shepherds’ announcement'}</p><p><strong>Scripture:</strong> Luke 2:8–20</p><p><strong>Reflection:</strong> What might the shepherds have felt when they heard the announcement? What good news would you want to share?</p><p><strong>Progress:</strong> ${xp} XP · ${scrolls}/3 scrolls · Level ${1+Math.floor(xp/50)}</p><p style="font-size:12px;color:#655b49">Progress saves in this browser on this device.</p><div class="bottomrow"><button id="ok">Close journal</button><button id="resetSave" class="secondary">Reset progress</button></div>`);
+
+  $('ok').onclick=closeCard;
+
+  $('resetSave').onclick=()=>{if(confirm('Reset all Kingdom Journey progress on this device?')){localStorage.removeItem('kj-free-save');location.reload()}};
+
 });
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeCard()});
 document.querySelectorAll('.ctrl').forEach(btn=>{const dir=btn.dataset.dir;const down=e=>{e.preventDefault();keys[dir]=true};const up=e=>{e.preventDefault();keys[dir]=false};btn.addEventListener('pointerdown',down);btn.addEventListener('pointerup',up);btn.addEventListener('pointercancel',up);btn.addEventListener('pointerleave',up)});
