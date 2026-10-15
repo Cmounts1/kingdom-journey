@@ -59,3 +59,21 @@ Implemented in the prototype code, pending live browser testing:
 
 ## Important publishing note
 GitHub Pages currently publishes from `fix/inn-interactions`, not `main`. Do not change that setting or merge this prototype into the published branch until the 3D version has been reviewed and explicitly approved.
+
+## 2D decisions carried into the 3D world
+
+The 3D branch now includes a first playable mapping of the existing 2D game's decisions and progression:
+
+- **Core route and locations:** inn, village cottages, Bethlehem market, hillside shepherd, three Scripture scrolls, and the manger/stable under the guiding star.
+- **Three player paths:** Traveler, Helper, and Mystery Seeker. The choice shapes quest guidance and selects one exclusive side quest.
+- **Chapter 1:** Shepherd conversation and Luke 2:8–20 quiz, awarding 25 XP.
+- **Collectibles:** three Scripture scrolls, each awarding 5 XP and contributing a journal note.
+- **Chapter 2:** unlocks after the shepherd quiz and all three scrolls; Luke 2:12–16 manger quiz awards 30 XP.
+- **Exclusive side quests:** The Missing Road Marker (Mara, 20 XP and Wayfinder's Compass); Bread for the Shepherds (Eli, 25 XP and Token of Kindness); The Torn Prophecy (Natan, 30 XP and Sealed Clue).
+- **Market and gear:** Traveler's Lantern (15 XP), Festival Cloak (25 XP), and Swift Traveler Boots (30 XP). The inventory has eight slots; gear can be equipped or unequipped.
+- **Journal and save:** XP, chapter flags, path choice, scroll collection, inventory/equipment, side-quest state, keepsakes, and player position are saved under a 3D-specific local-storage key. This intentionally does not overwrite the 2D game's save.
+- **Controls:** keyboard and mobile joystick, run toggle, interaction button, fixed third-person follow camera, and building entry/exit.
+
+## Preservation rule
+
+The original 2D game remains available on `main` and its current Pages publishing setup is not changed by this conversion. Treat the 3D version as a separate implementation of the same design decisions. Test and tune each 3D feature before considering the 2D game for retirement.
