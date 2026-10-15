@@ -554,6 +554,7 @@ function interact(){
  if(n.kind==='questItem'){if(!sideQuestStarted){toast('Speak with your path guide to accept the side quest first.');return}collectQuestItem();return}
 }
 interactButton.addEventListener('click',interact);
+let running=false;
 $('run').addEventListener('click',()=>{running=!running;$('run').textContent=running?'🏃 Running':'🏃 Walk';toast(running?'Running enabled':'Walking enabled')});
 $('inventory').addEventListener('click',()=>openInventory(false));
 $('journal').addEventListener('click',openJournal);
