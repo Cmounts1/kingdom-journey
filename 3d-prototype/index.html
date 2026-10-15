@@ -55,7 +55,7 @@ canvas{display:block;width:100%;height:100%}
     <div class="hint" id="hint">Choose your path, then explore Bethlehem.</div>
   </div>
   <div id="stats"><div class="stat">⭐ Level <b id="level">1</b></div><div class="stat">✨ XP <b id="xp">0</b></div><div class="stat">📜 Scrolls <b id="scrolls">0</b>/3</div></div>
-  <div id="quest"><strong>Current Quest</strong><span id="questText">Meet the shepherd and hear the announcement.</span></div>
+  <div id="quest" style="display:none" aria-hidden="true"><strong>Current Quest</strong><span id="questText">Meet the shepherd and hear the announcement.</span></div>
   <div id="message"><h2>Welcome, traveler</h2><p>The innkeeper’s lantern is lit.</p></div>
   <div id="controls">
     <div id="stickZone" aria-label="Movement joystick"><div id="stick"></div></div>
@@ -381,7 +381,7 @@ const itemGlow=new THREE.PointLight('#f5cc72',.8,5);itemGlow.position.set(worldO
 
 // Controls: keyboard + accessible touch joystick.
 const keys=new Set();
-addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key===' '||e.key==='Enter'){interact();return}keys.add(e.key.toLowerCase());});
+addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key===' '||e.key==='Enter'){hideGameTitle();interact();return}hideGameTitle();keys.add(e.key.toLowerCase());});
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 const zone=document.querySelector('#stickZone'),stick=document.querySelector('#stick');
 let pointer=null, joyX=0,joyY=0;
@@ -391,7 +391,7 @@ function setJoy(e){
  const len=Math.hypot(dx,dy);if(len>1){dx/=len;dy/=len}
  joyX=dx;joyY=dy;stick.style.transform=`translate(${dx*29}px,${dy*29}px)`;
 }
-zone.addEventListener('pointerdown',e=>{pointer=e.pointerId;zone.setPointerCapture(pointer);setJoy(e)});
+zone.addEventListener('pointerdown',e=>{hideGameTitle();pointer=e.pointerId;zone.setPointerCapture(pointer);setJoy(e)});
 zone.addEventListener('pointermove',e=>{if(pointer===e.pointerId)setJoy(e)});
 function releaseJoy(){pointer=null;joyX=0;joyY=0;stick.style.transform='translate(0,0)'}
 zone.addEventListener('pointerup',releaseJoy);zone.addEventListener('pointercancel',releaseJoy);zone.addEventListener('lostpointercapture',releaseJoy);
@@ -407,17 +407,21 @@ function persist(){
  try{localStorage.setItem(saveKey,JSON.stringify({xp,scrolls,quizDone,questDone,mangerDone,journeyPath,sideQuestStarted,sideQuestStep,sideQuestDone,inventory,equipped,keepsakes,gotScrolls,x:player.position.x,z:player.position.z}))}catch(e){}
  updateHud();
 }
-function updateHud(){
- $('xp').textContent=xp;$('level').textContent=1+Math.floor(xp/50);$('scrolls').textContent=scrolls;
- const q=journeyPath?sideQuestDefs[journeyPath]:null;
- if(!journeyPath)$('questText').textContent='Choose your path to begin.';
- else if(sideQuestDone&&q)$('questText').textContent='Side quest complete: '+q.questTitle+' · '+q.keepsake;
- else if(sideQuestStarted&&q) $('questText').textContent=sideQuestStep===0?'Side quest: Find '+q.itemName+'.':journeyPath==='helper'?'Deliver the bread basket to the shepherd.':q.returnText;
- else if(!quizDone)$('questText').textContent=journeyPath==='seeker'?'Find the shepherd and ask about the strange announcement.':journeyPath==='helper'?'Meet the shepherd and learn the good news to share.':'Meet the shepherd and hear the announcement.';
- else if(scrolls<3)$('questText').textContent=journeyPath==='seeker'?'Find all three scrolls. Each one is a clue.':'Gather the three Scripture scrolls along the road.';
- else if(!mangerDone)$('questText').textContent='Follow the star to the manger in Bethlehem.';
- else $('questText').textContent='Chapter 2 complete. Keep exploring Bethlehem.';
+function currentQuestText(){
+  const q=journeyPath?sideQuestDefs[journeyPath]:null;
+  if(!journeyPath)return 'Choose your path to begin.';
+  if(sideQuestDone&&q)return 'Side quest complete: '+q.questTitle+' · '+q.keepsake;
+  if(sideQuestStarted&&q)return sideQuestStep===0?'Side quest: Find '+q.itemName+'.':journeyPath==='helper'?'Deliver the bread basket to the shepherd.':q.returnText;
+  if(!quizDone)return journeyPath==='seeker'?'Find the shepherd and ask about the strange announcement.':journeyPath==='helper'?'Meet the shepherd and learn the good news to share.':'Meet the shepherd and hear the announcement.';
+  if(scrolls<3)return journeyPath==='seeker'?'Find all three scrolls. Each one is a clue.':'Gather the three Scripture scrolls along the road.';
+  if(!mangerDone)return 'Follow the star to the manger in Bethlehem.';
+  return 'Chapter 2 complete. Keep exploring Bethlehem.';
 }
+function updateHud(){
+  $('xp').textContent=xp;$('level').textContent=1+Math.floor(xp/50);$('scrolls').textContent=scrolls;
+  $('questText').textContent=currentQuestText();
+}
+function hideGameTitle(){const title=document.querySelector('.brand');if(title)title.style.display='none';}
 function toast(msg){toastEl.textContent=msg;toastEl.style.display='block';clearTimeout(window.kjToastTimer);window.kjToastTimer=setTimeout(()=>toastEl.style.display='none',1900)}
 function openCard(content){card.innerHTML=content;overlay.style.display='flex'}
 function closeCard(){overlay.style.display='none'}
@@ -458,7 +462,7 @@ function chooseJourneyPath(){
 function openInnWelcome(){
  const p=journeyPath==='helper'?'The Helper, looking for ways to serve and share hope.':journeyPath==='seeker'?'The Mystery Seeker, following clues hidden in the story.':'The Traveler, following the road and meeting the people of Bethlehem.';
  openCard('<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>The innkeeper welcomes you before you step into the hills of Bethlehem.</p><p><strong>Your path:</strong> '+p+'</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button class="secondary" id="innGear">🎒 Check inventory</button><button id="leaveWelcome">Begin journey</button></div>');
- $('innGear').onclick=()=>openInventory(true);$('leaveWelcome').onclick=closeCard;
+ $('innGear').onclick=()=>openInventory(true);$('leaveWelcome').onclick=()=>{closeCard();hideGameTitle();};
 }
 function offerSideQuest(){
  const q=sideQuestDefs[journeyPath];if(!q)return;
@@ -521,7 +525,7 @@ function openInventory(fromInn=false){
 function openJournal(){
  const q=journeyPath?sideQuestDefs[journeyPath]:null;
  const notes=['The Angel’s Announcement · Luke 2:9–10','A Sign for the Shepherds · Luke 2:11–12','Wonder Shared with Others · Luke 2:15–20'];
- openCard('<div class="eyebrow">A record of your journey</div><h2>Traveler’s Journal</h2><p>Your story, completed quests, and Scripture discoveries, gathered in one place.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="stat">⭐ '+xp+' XP</div><div class="stat">📜 '+scrolls+'/3 scrolls</div><div class="stat">🏅 '+(Number(quizDone)+Number(mangerDone))+'/2 chapters</div></div><h3>Chapter entries</h3><p>'+(quizDone?'✓':'○')+' Chapter 1: The Shepherds’ Announcement · Luke 2:8–20 · 25 XP</p><p>'+(mangerDone?'✓':'○')+' Chapter 2: A Sign in the Manger · Luke 2:12–16 · 30 XP</p><h3>Scripture notes</h3>'+(notes.filter((n,i)=>gotScrolls[i]).map(n=>'<p>📜 '+n+'</p>').join('')||'<p>Collect the three glowing scrolls to add Scripture notes.</p>')+(q?'<h3>Path-exclusive side quest</h3><p><strong>'+q.questTitle+'</strong></p><p>'+(sideQuestDone?'✓ Completed':sideQuestStarted?(sideQuestStep===0?'In progress: find '+q.itemName+'.':q.returnText):'Not started: speak with '+q.npcName+'.')+'</p><p><strong>Reward:</strong> '+q.reward+' XP · '+q.keepsake+'</p>':'')+(keepsakes.length?'<p><strong>Keepsakes earned:</strong> '+keepsakes.join(', ')+'</p>':'')+'<div class="bottomrow"><button id="journalClose">Close journal</button></div>');
+ openCard('<div class="eyebrow">A record of your journey</div><h2>Traveler’s Journal</h2><p>Your story, completed quests, and Scripture discoveries, gathered in one place.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="stat">⭐ '+xp+' XP</div><div class="stat">📜 '+scrolls+'/3 scrolls</div><div class="stat">🏅 '+(Number(quizDone)+Number(mangerDone))+'/2 chapters</div></div><h3>Current quest</h3><p>'+currentQuestText()+'</p><h3>Chapter entries</h3><p>'+(quizDone?'✓':'○')+' Chapter 1: The Shepherds’ Announcement · Luke 2:8–20 · 25 XP</p><p>'+(mangerDone?'✓':'○')+' Chapter 2: A Sign in the Manger · Luke 2:12–16 · 30 XP</p><h3>Scripture notes</h3>'+(notes.filter((n,i)=>gotScrolls[i]).map(n=>'<p>📜 '+n+'</p>').join('')||'<p>Collect the three glowing scrolls to add Scripture notes.</p>')+(q?'<h3>Path-exclusive side quest</h3><p><strong>'+q.questTitle+'</strong></p><p>'+(sideQuestDone?'✓ Completed':sideQuestStarted?(sideQuestStep===0?'In progress: find '+q.itemName+'.':q.returnText):'Not started: speak with '+q.npcName+'.')+'</p><p><strong>Reward:</strong> '+q.reward+' XP · '+q.keepsake+'</p>':'')+(keepsakes.length?'<p><strong>Keepsakes earned:</strong> '+keepsakes.join(', ')+'</p>':'')+'<div class="bottomrow"><button id="journalClose">Close journal</button></div>');
  $('journalClose').onclick=closeCard;
 }
 function interact(){
