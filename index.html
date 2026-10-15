@@ -73,8 +73,9 @@ const player={x:0,y:0,speed:3.2,dir:0};
 const world={w:1000,h:720};
 const inn={x:350,y:430};
 let xp=0,scrolls=0,quizDone=false,questDone=false,mangerDone=false,interacting=false,running=false;
+let journeyPath='';
 const saved=(()=>{try{return JSON.parse(localStorage.getItem('kj-free-save')||'{}')}catch(e){return {}}})();
-xp=Number(saved.xp)||0;scrolls=Number(saved.scrolls)||0;quizDone=!!saved.quizDone;questDone=!!saved.questDone;mangerDone=!!saved.mangerDone;
+xp=Number(saved.xp)||0;scrolls=Number(saved.scrolls)||0;quizDone=!!saved.quizDone;questDone=!!saved.questDone;mangerDone=!!saved.mangerDone;journeyPath=['traveler','helper','seeker'].includes(saved.journeyPath)?saved.journeyPath:'';
 player.x=Number.isFinite(saved.x)?saved.x:inn.x+28;player.y=Number.isFinite(saved.y)?saved.y:inn.y+10;
 const shepherd={x:635,y:310};
 const manger={x:760,y:220};
@@ -84,10 +85,16 @@ let equipped=Array.isArray(saved.equipped)?saved.equipped.slice():inventory.slic
 const inventorySlotCount=8;
 const scrollItems=[{x:260,y:330,got:false},{x:800,y:430,got:false},{x:430,y:570,got:false}];
 scrollItems.forEach((s,i)=>s.got=!!(saved.got&&saved.got[i]));
-function save(){try{localStorage.setItem('kj-free-save',JSON.stringify({xp,scrolls,quizDone,questDone,mangerDone,inventory,equipped,x:player.x,y:player.y,got:scrollItems.map(s=>s.got)}))}catch(e){} updateHud()}
+function save(){try{localStorage.setItem('kj-free-save',JSON.stringify({xp,scrolls,quizDone,questDone,mangerDone,journeyPath,inventory,equipped,x:player.x,y:player.y,got:scrollItems.map(s=>s.got)}))}catch(e){} updateHud()}
 function updateHud(){
  $('xp').textContent=xp;$('level').textContent=1+Math.floor(xp/50);$('scrolls').textContent=scrolls;
- $('questText').textContent=mangerDone?'Chapter 2 complete! Keep exploring Bethlehem.':quizDone&&scrolls>=3?'Chapter 2: Follow the star to the manger.':quizDone?'Collect the three Scripture scrolls around the hillside.':'Find the shepherd and learn about the announcement.';
+ const objectives={
+  traveler:{first:'Meet the shepherd and hear the announcement.',scrolls:'Gather the three scrolls along the road.',manger:'Follow the star to the manger.',done:'You reached the manger. Keep exploring Bethlehem.'},
+  helper:{first:'Meet the shepherd and learn the good news to share.',scrolls:'Gather the three scrolls and carry the good news onward.',manger:'Visit the manger, then help others share the story.',done:'You helped carry the good news. Look for more people to help.'},
+  seeker:{first:'Find the shepherd and ask about the strange announcement.',scrolls:'Find all three scrolls. Each one is a clue.',manger:'Follow the clues and the star to the manger.',done:'The first mystery is revealed. More discoveries await.'}
+ };
+ const o=objectives[journeyPath]||objectives.traveler;
+ $('questText').textContent=mangerDone?o.done:quizDone&&scrolls>=3?o.manger:quizDone?o.scrolls:o.first;
 }
 function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
 addEventListener('resize',resize);resize();
@@ -194,7 +201,7 @@ function openMarket(){
   {id:'boots',name:'Swift Traveler Boots',icon:'🥾',price:30,desc:'Move 20% faster while exploring.'}
  ];
  const rows=goods.map(g=>{const owned=inventory.includes(g.id);return `<div style="border:1px solid #d4c9af;border-radius:14px;padding:12px;margin:9px 0;background:#fffaf0"><div style="font-size:18px">${g.icon} <strong>${g.name}</strong></div><p style="margin:5px 0;font-size:13px">${g.desc}</p><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><strong>✨ ${g.price} XP</strong><button data-buy="${g.id}" ${owned||xp<g.price?'disabled':''} style="border:0;border-radius:10px;padding:10px 12px;background:${owned?'#ded3bc':xp<g.price?'#ded3bc':'#203a42'};color:${owned||xp<g.price?'#716958':'white'};font-weight:700">${owned?'Owned':xp<g.price?'Need more XP':'Buy item'}</button></div></div>`}).join('');
- openCard(`<div class="eyebrow">Bethlehem · Trading post</div><h2>Welcome to the Market</h2><p>Spend your earned XP on useful travel gear. Purchases are saved with your journey.</p><p><strong>Your balance: ✨ <span id="marketBalance">${xp}</span> XP</strong></p>${rows}<p id="marketMessage" aria-live="polite"></p><div class="bottomrow"><button id="marketClose">Back to the road</button></div>`);
+ openCard(`<div class="eyebrow">Bethlehem · Trading post</div><h2>Welcome to the Market</h2><p>${journeyPath==='helper'?'A well-prepared traveler can help others along the road. Choose gear carefully, and keep an eye out for people who may need a hand.':journeyPath==='seeker'?'The market is full of travelers and rumors. Gear can help you search farther, and conversations may reveal new clues.':'Prepare for the road ahead with useful gear. Every purchase is saved with your journey.'}</p><p><strong>Your balance: ✨ <span id="marketBalance">${xp}</span> XP</strong></p>${rows}<p id="marketMessage" aria-live="polite"></p><div class="bottomrow"><button id="marketClose">Back to the road</button></div>`);
  document.querySelectorAll('[data-buy]').forEach(btn=>btn.onclick=()=>{const g=goods.find(item=>item.id===btn.dataset.buy);if(!g||inventory.includes(g.id))return;if(xp<g.price){$('marketMessage').textContent='You need more XP for that item.';return}xp-=g.price;inventory.push(g.id);equipped.push(g.id);save();openMarket();$('marketMessage').textContent=`Purchased ${g.name}! Enjoy your new gear.`});
  $('marketClose').onclick=closeCard;
 }
@@ -237,9 +244,23 @@ function openInventory(fromInn=false){
  openCard('');
  render();
 }
+function chooseJourneyPath(){
+ const paths=[
+  {id:'traveler',icon:'🧭',name:'The Traveler',tag:'Follow the road',text:'Walk the roads of Bethlehem, meet the people in the story, gather Scripture, and follow the star to the manger.',goal:'Explore landmarks and experience the biblical story firsthand.'},
+  {id:'helper',icon:'🤝',name:'The Helper',tag:'Serve along the way',text:'Pay attention to the people you meet. Learn the good news, gather the scrolls, and prepare to carry hope and kindness through Bethlehem.',goal:'Make helping others and sharing hope the heart of your journey.'},
+  {id:'seeker',icon:'🔎',name:'The Mystery Seeker',tag:'Follow the clues',text:'A remarkable announcement has reached the hills. Search for scattered scrolls, connect their messages, and uncover why everyone is talking about a child in a manger.',goal:'Treat every scroll and conversation as a clue in a larger mystery.'}
+ ];
+ openCard('<div class="eyebrow">Your adventure begins</div><h2>Choose your path</h2><p>Every path follows the same biblical story, but your purpose changes how you experience it. Choose the role you want to play. Your choice is saved with your journey.</p>'+paths.map(p=>'<button class="choice" data-journey-path="'+p.id+'"><div style="font-size:23px">'+p.icon+' <strong>'+p.name+'</strong></div><div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#8b6322;margin:4px 0">'+p.tag+'</div><div style="font-size:13px;line-height:1.45">'+p.text+'</div><div style="font-size:11px;margin-top:7px;color:#655b49"><strong>Your focus:</strong> '+p.goal+'</div></button>').join('')+'<p style="font-size:11px;color:#655b49">You can explore freely, but your chosen path will shape quest guidance and story conversations.</p>');
+ document.querySelectorAll('[data-journey-path]').forEach(btn=>btn.onclick=()=>{
+  journeyPath=btn.dataset.journeyPath;save();
+  const chosen=paths.find(p=>p.id===journeyPath);
+  openCard('<div class="eyebrow">Your path is chosen</div><h2>'+chosen.icon+' '+chosen.name+'</h2><p>'+chosen.text+'</p><p><strong>First objective:</strong> '+chosen.goal+'</p><p>The inn door is open. Bethlehem is waiting beyond it.</p><div class="bottomrow"><button id="beginChosenPath">Begin the journey</button></div>');
+  $('beginChosenPath').onclick=closeCard;
+ });
+}
 function openInnWelcome(){
- openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="innInventory">🎒 Check inventory</button><button id="ok">Leave the inn</button></div>`);
- $('ok').onclick=closeCard;
+ openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Your path:</strong> ${journeyPath==='helper'?'The Helper, looking for ways to serve and share hope.':journeyPath==='seeker'?'The Mystery Seeker, following clues hidden in the story.':'The Traveler, following the road and meeting the people of Bethlehem.'}</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="innInventory">🎒 Check inventory</button><button id="ok">Leave the inn</button></div>`);
+ $('ok').onclick=()=>journeyPath?closeCard():chooseJourneyPath();
  $('innInventory').onclick=()=>openInventory(true);
 }
 function interact(){
@@ -262,7 +283,7 @@ function interact(){
  }
  const item=scrollItems[n.index];
  if(!item||item.got)return;
- item.got=true;scrolls++;xp+=5;save();toast('Scripture scroll collected! +5 XP');
+ item.got=true;scrolls++;xp+=5;save();toast((journeyPath==='seeker'?'Clue discovered!':journeyPath==='helper'?'Good news gathered!':'Scripture scroll collected!')+' +5 XP');
  if(scrolls>=3){
   openCard(`<div class="eyebrow">Chapter 1 complete</div><h2>Three scrolls collected!</h2><p>You have gathered every scroll scattered across the hillside. Your next destination is the manger in Bethlehem.</p><p><strong>Chapter 2 unlocked:</strong> Follow the star and discover the sign described in Luke 2:12–16.</p><div class="bottomrow"><button id="ok">Continue exploring</button></div>`);
   $('ok').onclick=closeCard;
@@ -296,7 +317,8 @@ addEventListener('keydown',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=tr
 addEventListener('keyup',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=false;if(['ArrowDown','s','S'].includes(e.key))keys.down=false;if(['ArrowLeft','a','A'].includes(e.key))keys.left=false;if(['ArrowRight','d','D'].includes(e.key))keys.right=false});
 function frame(t){let dt=Math.min((t-last)/16.67||1,2);last=t;if(!interacting){let dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);if(dx||dy){let mag=Math.hypot(dx,dy);const pace=player.speed*(equipped.includes('boots')?1.2:1)*(running?1.75:1);player.x=clamp(player.x+dx/mag*pace*dt,35,world.w-35);player.y=clamp(player.y+dy/mag*pace*dt,55,world.h-25);player.dir=Math.atan2(dy,dx);if(Math.random()<.035)save()}}draw();drawMiniMap();setHint();requestAnimationFrame(frame)}
 updateHud();
-if(!Object.keys(saved).length){openInnWelcome();}
+if(!journeyPath){chooseJourneyPath();}
+else if(!Object.keys(saved).length){openInnWelcome();}
 requestAnimationFrame(frame);
 })();
 </script>
