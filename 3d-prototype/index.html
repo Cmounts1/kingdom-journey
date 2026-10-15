@@ -88,8 +88,8 @@ import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#b7d8c7');
-scene.fog = new THREE.Fog('#b7d8c7', 24, 62);
-const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 150);
+scene.fog = new THREE.Fog('#b7d8c7', 42, 118);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 320);
 const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
 renderer.setSize(innerWidth, innerHeight);
@@ -118,12 +118,12 @@ function box(w,h,d,material,x,y,z,parent=scene){return mesh(new THREE.BoxGeometr
 function cylinder(rt,rb,h,material,x,y,z,segments=8,parent=scene){return mesh(new THREE.CylinderGeometry(rt,rb,h,segments),material,x,y,z,parent)}
 function sphere(r,material,x,y,z,parent=scene,detail=0){return mesh(new THREE.IcosahedronGeometry(r,detail),material,x,y,z,parent)}
 
-const ground=box(120,.35,120,materials.grass,0,-.24,0);ground.receiveShadow=true;
+const ground=box(220,.35,220,materials.grass,0,-.24,0);ground.receiveShadow=true;
 // Soft rolling hills, made from low-poly mounds.
-for(let i=0;i<13;i++){const x=(i%5-2)*13+(Math.random()-.5)*4,z=-17-Math.floor(i/5)*13;const h=2+Math.random()*3;const hill=sphere(1, i%3?materials.grass2:materials.grass,x,h*.35,z,scene,1);hill.scale.set(7+Math.random()*3,h,5+Math.random()*3);hill.castShadow=false;}
+for(let i=0;i<22;i++){const x=(i%6-2.5)*25+(Math.random()-.5)*7,z=-30-Math.floor(i/6)*24;const h=2+Math.random()*3;const hill=sphere(1, i%3?materials.grass2:materials.grass,x,h*.35,z,scene,1);hill.scale.set(7+Math.random()*3,h,5+Math.random()*3);hill.castShadow=false;}
 // A winding sandy approach.
-const path=box(4,.08,23,materials.path,0,.0,2);path.rotation.y=-.12;
-for(let i=0;i<12;i++){const s=box(.38,.09,.55,materials.stone,Math.sin(i*.8)*.65,.06,11-i*1.7);s.rotation.y=(i%2-.5)*.2;}
+const path=box(4,.08,30,materials.path,0,.0,-2);path.rotation.y=-.12;
+for(let i=0;i<16;i++){const s=box(.38,.09,.55,materials.stone,Math.sin(i*.8)*.65,.06,12-i*2.0);s.rotation.y=(i%2-.5)*.2;}
 // Inn shell with a real doorway, visible floor and furnished interior.
 box(8.8,.18,4.8,materials.wood,0,.02,-7);
 box(9,4.5,.22,materials.wall,0,2.25,-9.42);
@@ -178,7 +178,7 @@ for(const [x,z] of [[-5,-4],[5,-4],[-5,-9],[5,-9]]){
   cylinder(.43,.43,.09,materials.darkWood,x,.65,z,9);
 }
 for(let i=0;i<18;i++){
- const x=(i%2?1:-1)*(6.2+Math.random()*2),z=-2-Math.random()*13;
+ const x=(i%2?1:-1)*(9.2+Math.random()*4),z=-4-Math.random()*28;
  const stem=cylinder(.04,.06,.6,materials.leaf,x,.3,z,5);
  sphere(.2, i%2?materials.leaf:materials.leaf2,x,.7,z,scene,1);
 }
@@ -188,7 +188,7 @@ function tree(x,z,size=1){
  const a=sphere(1.05*size,materials.leaf,x,2.0*size,z,scene,1);a.scale.set(1,1.15,.95);
  const b=sphere(.75*size,materials.leaf2,x+.42*size,2.5*size,z-.12*size,scene,1);
 }
-[[-10,-5],[-12,-13],[10,-8],[12,-17],[-8,-20],[7,3],[14,1]].forEach((p,i)=>tree(p[0],p[1],.8+(i%3)*.18));
+[[-19,-9],[-23,-25],[20,-15],[23,-32],[-16,-38],[13,6],[28,3],[-28,-20],[31,-43]].forEach((p,i)=>tree(p[0],p[1],.8+(i%3)*.18));
 // Small enterable cottages with door openings and simple furnishings.
 const cottageRoofs=[];
 function cottage(x,z,scale=1){
@@ -207,30 +207,49 @@ function cottage(x,z,scale=1){
  box(.85,.55,.55,materials.wood,.72,.38,-.48,g);
  box(1.05,.12,.22,materials.wood,0,1.55,-1.13,g);
 }
-cottage(-13,-1,.9);cottage(14,-3,.8);cottage(12,-25,1.15);
+cottage(-23,-5,.9);cottage(25,-9,.8);cottage(22,-43,1.15);
 const buildings=[
  {name:'The Inn at Bethlehem',x:0,z:-7,doorX:0,doorZ:-4.05,insideX:0,insideZ:-6.65,kind:'inn'},
- {name:'The Wayfarer’s Cottage',x:-13,z:-1,doorX:-13,doorZ:.14,insideX:-13,insideZ:-1,kind:'cottage',scale:.9,roof:cottageRoofs[0]},
- {name:'The Shepherd’s Cottage',x:14,z:-3,doorX:14,doorZ:-1.98,insideX:14,insideZ:-3,kind:'cottage',scale:.8,roof:cottageRoofs[1]},
- {name:'The Hillside Cottage',x:12,z:-25,doorX:12,doorZ:-23.54,insideX:12,insideZ:-25,kind:'cottage',scale:1.15,roof:cottageRoofs[2]}
+ {name:'The Wayfarer’s Cottage',x:-23,z:-5,doorX:-23,doorZ:-3.86,insideX:-23,insideZ:-5,kind:'cottage',scale:.9,roof:cottageRoofs[0]},
+ {name:'The Shepherd’s Cottage',x:25,z:-9,doorX:25,doorZ:-7.98,insideX:25,insideZ:-9,kind:'cottage',scale:.8,roof:cottageRoofs[1]},
+ {name:'The Hillside Cottage',x:22,z:-43,doorX:22,doorZ:-41.54,insideX:22,insideZ:-43,kind:'cottage',scale:1.15,roof:cottageRoofs[2]}
 ];
 // The wider 3D world mirrors the 2D journey landmarks and collectibles.
 const worldObjects={
- shepherd:{x:8,z:-14},
- market:{x:-7,z:2.5},
- manger:{x:0,z:-21.5},
- scrolls:[{x:-7,z:-8,got:false},{x:8,z:-7,got:false},{x:-5,z:-17,got:false}],
+ shepherd:{x:14,z:-25},
+ market:{x:-13,z:5},
+ manger:{x:0,z:-42},
+ scrolls:[{x:-12,z:-13,got:false},{x:15,z:-14,got:false},{x:-9,z:-31,got:false}],
  sideNpcs:{
-  traveler:{x:-9,z:-1,name:'Mara the Wayfinder'},
-  helper:{x:-7,z:5,name:'Eli the Baker'},
-  seeker:{x:8,z:-17,name:'Natan the Scroll Keeper'}
+  traveler:{x:-17,z:-4,name:'Mara the Wayfinder'},
+  helper:{x:-12,z:9,name:'Eli the Baker'},
+  seeker:{x:14,z:-31,name:'Natan the Scroll Keeper'}
  },
  sideItems:{
-  traveler:{x:-5,z:-12,name:'bronze road marker',icon:'🪧'},
-  helper:{x:-3,z:3,name:'basket of fresh bread',icon:'🥖'},
-  seeker:{x:5,z:-12,name:'torn parchment clue',icon:'📜'}
+  traveler:{x:-9,z:-22,name:'bronze road marker',icon:'🪧'},
+  helper:{x:-7,z:7,name:'basket of fresh bread',icon:'🥖'},
+  seeker:{x:9,z:-25,name:'torn parchment clue',icon:'📜'}
  }
 };
+
+
+// Long, gently winding trails connect the expanded quest regions.
+function trailBetween(x1,z1,x2,z2,width=2.7){
+ const dx=x2-x1,dz=z2-z1,len=Math.hypot(dx,dz);
+ const trail=box(width,.07,len,materials.path,(x1+x2)/2,.005,(z1+z2)/2);
+ trail.rotation.y=Math.atan2(dx,dz);
+ for(let i=1;i<Math.floor(len/4);i++){
+  const t=i/Math.floor(len/4),x=x1+dx*t,z=z1+dz*t;
+  const stoneStep=box(.42,.08,.5,materials.stone,x,.07,z);
+  stoneStep.rotation.y=trail.rotation.y+(i%2?-.12:.12);
+ }
+}
+trailBetween(0,-4,worldObjects.market.x,worldObjects.market.z);
+trailBetween(0,-4,worldObjects.shepherd.x,worldObjects.shepherd.z);
+trailBetween(worldObjects.shepherd.x,worldObjects.shepherd.z,worldObjects.manger.x,worldObjects.manger.z);
+trailBetween(0,-4,-23,-5);
+trailBetween(0,-4,25,-9);
+trailBetween(worldObjects.shepherd.x,worldObjects.shepherd.z,22,-43);
 
 function signBoard(x,z,labelColor=materials.gold){
  const g=new THREE.Group();scene.add(g);g.position.set(x,0,z);
