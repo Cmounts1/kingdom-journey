@@ -279,9 +279,10 @@ function interact(){
  if(entered&&currentBuilding){
   const b=currentBuilding;
   entered=false;currentBuilding=null;
-  player.position.set(b.doorX,0,b.doorZ+1.0);
-  player.rotation.y=0;
-  cameraOffset.set(0,5.2,9.5);
+  if(b.kind==='inn')roof1.visible=true;
+   player.position.set(b.doorX,0,b.doorZ+1.0);
+   player.rotation.y=0;
+   cameraOffset.set(0,5.2,9.5);
   message.querySelector('h2').textContent='Back on the road';
   message.querySelector('p').textContent='You step outside into the storybook village.';
   message.style.display='block';
@@ -293,8 +294,10 @@ function interact(){
  if(b){
   entered=true;currentBuilding=b;
   player.position.set(b.insideX,0,b.insideZ);
-  player.rotation.y=Math.PI;
-  cameraOffset.set(0,3.0,-2.0);
+   player.rotation.y=Math.PI;
+   // Hide the opaque roof indoors so the camera can see the furnished room.
+   if(b.kind==='inn')roof1.visible=false;
+   cameraOffset.set(0,2.65,-2.45);
   message.querySelector('h2').textContent=b.name;
   message.querySelector('p').textContent=b.kind==='inn'
    ?'Warm lantern light fills the common room. A counter, benches and a little hearth wait inside. Tap Leave Building to return to the village.'
@@ -311,7 +314,7 @@ function interact(){
 interactButton.addEventListener('click',interact);
 document.querySelector('#reset').addEventListener('click',()=>{
  player.position.set(0,0,7);player.rotation.y=0;cameraOffset.set(0,5.2,9.5);
- entered=false;currentBuilding=null;message.style.display='none';
+  roof1.visible=true;entered=false;currentBuilding=null;message.style.display='none';
 });
 message.addEventListener('click',()=>{message.style.display='none'});
 // Lightweight collision rules keep the traveler on the path and out of solid scenery.
