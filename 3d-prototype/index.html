@@ -438,7 +438,7 @@ function interact(){
   const b=currentBuilding;entered=false;currentBuilding=null;
   if(b.kind==='inn')roof1.visible=true;
   player.position.set(b.doorX,0,b.doorZ+1.0);player.rotation.y=0;cameraOffset.set(0,5.2,9.5);
-  topHint.style.display='';questEl.style.display='';statsEl.style.display='';
+  document.querySelector('.topbar').style.display='';topHint.style.display='';questEl.style.display='';statsEl.style.display='';
   message.style.display='none';return;
  }
  const door=closestEntrance();
@@ -446,7 +446,7 @@ function interact(){
   entered=true;currentBuilding=door;player.position.set(door.insideX,0,door.insideZ);player.rotation.y=Math.PI;
   if(door.kind==='inn')roof1.visible=false;
   cameraOffset.set(0,2.65,-2.45);message.style.display='none';
-  topHint.style.display='none';questEl.style.display='none';statsEl.style.display='none';
+  document.querySelector('.topbar').style.display='none';topHint.style.display='none';questEl.style.display='none';statsEl.style.display='none';
   return;
  }
  const n=nearestAction();
@@ -465,7 +465,7 @@ interactButton.addEventListener('click',interact);
 $('run').addEventListener('click',()=>{running=!running;$('run').textContent=running?'🏃 Running':'🏃 Walk';toast(running?'Running enabled':'Walking enabled')});
 $('inventory').addEventListener('click',()=>openInventory(false));
 $('journal').addEventListener('click',openJournal);
-$('reset').addEventListener('click',()=>{player.position.set(0,0,7);player.rotation.y=0;cameraOffset.set(0,5.2,9.5);roof1.visible=true;entered=false;currentBuilding=null;topHint.style.display='';questEl.style.display='';statsEl.style.display='';message.style.display='none';closeCard()});
+$('reset').addEventListener('click',()=>{player.position.set(0,0,7);player.rotation.y=0;cameraOffset.set(0,5.2,9.5);roof1.visible=true;entered=false;currentBuilding=null;document.querySelector('.topbar').style.display='';topHint.style.display='';questEl.style.display='';statsEl.style.display='';message.style.display='none';closeCard()});
 message.addEventListener('click',()=>{message.style.display='none'});
 function updateInteractLabel(){
  if(entered){interactButton.textContent='Leave Building';return}
@@ -509,7 +509,7 @@ function animate(){
  let x=(keys.has('a')||keys.has('arrowleft')?-1:0)+(keys.has('d')||keys.has('arrowright')?1:0)+joyX;
  let z=(keys.has('w')||keys.has('arrowup')?-1:0)+(keys.has('s')||keys.has('arrowdown')?1:0)+joyY;
  const len=Math.hypot(x,z);
- if(len>.12){
+ if(len>.12&&overlay.style.display!=='flex'){
   x/=Math.max(1,len);z/=Math.max(1,len);
   const speed=4.1*(equipped.includes('boots')?1.2:1)*(running?1.75:1);
   const nextX=THREE.MathUtils.clamp(player.position.x+x*speed*dt,-18,18);
