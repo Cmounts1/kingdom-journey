@@ -201,6 +201,56 @@ const buildings=[
  {name:'The Shepherd’s Cottage',x:14,z:-3,doorX:14,doorZ:-1.98,insideX:14,insideZ:-3,kind:'cottage',scale:.8},
  {name:'The Hillside Cottage',x:12,z:-25,doorX:12,doorZ:-23.54,insideX:12,insideZ:-25,kind:'cottage',scale:1.15}
 ];
+// The wider 3D world mirrors the 2D journey landmarks and collectibles.
+const worldObjects={
+ shepherd:{x:7,z:-14},
+ market:{x:-10,z:2},
+ manger:{x:11,z:-20.5},
+ scrolls:[{x:-8,z:-7,got:false},{x:8,z:-9,got:false},{x:-3,z:-18,got:false}],
+ sideNpcs:{
+  traveler:{x:-15,z:-6,name:'Mara the Wayfinder'},
+  helper:{x:-10,z:5,name:'Eli the Baker'},
+  seeker:{x:4,z:-18,name:'Natan the Scroll Keeper'}
+ },
+ sideItems:{
+  traveler:{x:-11,z:-10,name:'bronze road marker',icon:'🪧'},
+  helper:{x:-5,z:7,name:'basket of fresh bread',icon:'🥖'},
+  seeker:{x:1,z:-14,name:'torn parchment clue',icon:'📜'}
+ }
+};
+const worldDecor=new THREE.Group();scene.add(worldDecor);
+function signBoard(x,z,labelColor=materials.gold){
+ const post=cylinder(.055,.07,1.2,materials.wood,x,.6,z,7,worldDecor);
+ const board=box(.9,.48,.12,materials.darkWood,x,1.35,z,worldDecor);
+ box(.72,.28,.025,labelColor,x,1.35,z+.075,worldDecor);
+ return board;
+}
+// Bethlehem market stall and colorful goods.
+box(3,.16,1.8,materials.wood,-10,.12,2,worldDecor);
+for(const x of [-11.25,-10,-8.75])cylinder(.06,.07,2.15,materials.wood,x,1.08,2,7,worldDecor);
+box(3.2,.14,1.9,materials.roofLight,-10,2.18,2,worldDecor);
+for(const x of [-11,-10,-9]){
+ sphere(.18,materials.gold,x,.48,1.65,worldDecor,1);
+ box(.35,.32,.32,materials.leaf,x,.42,2.15,worldDecor);
+}
+signBoard(-10,3.1,materials.trim);
+// Stable and manger, lit by the star.
+box(4,.18,3,materials.wood,11,.08,-20.5,worldDecor);
+box(4,2.4,.18,materials.wallShade,11,1.2,-22,worldDecor);
+box(.18,2.4,3,materials.wallShade,9,1.2,-20.5,worldDecor);
+box(.18,2.4,3,materials.wallShade,13,1.2,-20.5,worldDecor);
+const stableRoof=mesh(new THREE.ConeGeometry(3.1,1.8,4),materials.roof,11,3,-20.5,worldDecor);stableRoof.rotation.y=Math.PI/4;stableRoof.scale.z=.8;
+box(1.35,.45,.55,materials.wood,11, .42,-20.1,worldDecor);
+box(1.12,.12,.42,materials.trim,11,.68,-20.1,worldDecor);
+const starShape=new THREE.Shape();
+for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?0.22:0.5,x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)starShape.moveTo(x,y);else starShape.lineTo(x,y)}
+starShape.closePath();
+const star=mesh(new THREE.ShapeGeometry(starShape),new THREE.MeshBasicMaterial({color:'#ffe58a',side:THREE.DoubleSide}),11,5,-20.2,worldDecor);
+const starLight=new THREE.PointLight('#ffe58a',1.7,8);starLight.position.set(11,4.7,-19.5);worldDecor.add(starLight);
+// Decorative paths lead between the story locations.
+function pathStone(x,z){const s=box(.55,.07,.7,materials.stone,x,.05,z,worldDecor);s.rotation.y=.12}
+for(let i=0;i<9;i++){pathStone(-.9-i*.8,-5-i*1.1);pathStone(1+i*.7,-12-i*.8)}
+
 // Player: more natural storybook traveler with layered clothing and articulated limbs.
 const player=new THREE.Group();scene.add(player);player.position.set(0,0,7);
 const body=new THREE.Group();player.add(body);
