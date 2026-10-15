@@ -74,10 +74,17 @@ const world={w:1000,h:720};
 const inn={x:350,y:430};
 let xp=0,scrolls=0,quizDone=false,questDone=false,mangerDone=false,interacting=false,running=false;
 let journeyPath='';
+let sideQuestStarted=false,sideQuestStep=0,sideQuestDone=false;
+let keepsakes=[];
 const saved=(()=>{try{return JSON.parse(localStorage.getItem('kj-free-save')||'{}')}catch(e){return {}}})();
-xp=Number(saved.xp)||0;scrolls=Number(saved.scrolls)||0;quizDone=!!saved.quizDone;questDone=!!saved.questDone;mangerDone=!!saved.mangerDone;journeyPath=['traveler','helper','seeker'].includes(saved.journeyPath)?saved.journeyPath:'';
+xp=Number(saved.xp)||0;scrolls=Number(saved.scrolls)||0;quizDone=!!saved.quizDone;questDone=!!saved.questDone;mangerDone=!!saved.mangerDone;journeyPath=['traveler','helper','seeker'].includes(saved.journeyPath)?saved.journeyPath:'';sideQuestStarted=!!saved.sideQuestStarted;sideQuestStep=Number(saved.sideQuestStep)||0;sideQuestDone=!!saved.sideQuestDone;keepsakes=Array.isArray(saved.keepsakes)?saved.keepsakes:[];
 player.x=Number.isFinite(saved.x)?saved.x:inn.x+28;player.y=Number.isFinite(saved.y)?saved.y:inn.y+10;
 const shepherd={x:635,y:310};
+const sideQuestDefs={
+ traveler:{npcName:'Mara the Wayfinder',npcX:475,npcY:500,itemX:555,itemY:575,itemName:'bronze road marker',questTitle:'The Missing Road Marker',questText:'A caravan marker has gone missing on the hillside. Find it so travelers can follow the safe road into Bethlehem.',returnText:'Bring the bronze marker back to Mara.',reward:20,keepsake:'Wayfinder’s Compass',rewardText:'Mara gives you a little compass and 20 XP. It is a keepsake of the roads you have explored.'},
+ helper:{npcName:'Eli the Baker',npcX:300,npcY:525,itemX:405,itemY:500,itemName:'basket of fresh bread',questTitle:'Bread for the Shepherds',questText:'Eli has prepared bread for a tired shepherd, but the basket was set down along the path. Find the basket and deliver it to the shepherd.',returnText:'Carry the bread basket to the shepherd on the hillside.',reward:25,keepsake:'Token of Kindness',rewardText:'The shepherd shares a carved token with you, thanking you for your kindness. You earn 25 XP.'},
+ seeker:{npcName:'Natan the Scroll Keeper',npcX:505,npcY:270,itemX:550,itemY:370,itemName:'torn parchment clue',questTitle:'The Torn Prophecy',questText:'Natan found a fragment of old parchment, but another piece is missing. Search nearby and bring the torn clue back so he can study it.',returnText:'Return the parchment fragment to Natan.',reward:30,keepsake:'Sealed Clue',rewardText:'Natan seals the fragment in your journal as a clue for a future mystery.'}
+};
 const manger={x:760,y:220};
 const market={x:250,y:455};
 let inventory=Array.isArray(saved.inventory)?saved.inventory:[];
@@ -85,7 +92,7 @@ let equipped=Array.isArray(saved.equipped)?saved.equipped.slice():inventory.slic
 const inventorySlotCount=8;
 const scrollItems=[{x:260,y:330,got:false},{x:800,y:430,got:false},{x:430,y:570,got:false}];
 scrollItems.forEach((s,i)=>s.got=!!(saved.got&&saved.got[i]));
-function save(){try{localStorage.setItem('kj-free-save',JSON.stringify({xp,scrolls,quizDone,questDone,mangerDone,journeyPath,inventory,equipped,x:player.x,y:player.y,got:scrollItems.map(s=>s.got)}))}catch(e){} updateHud()}
+function save(){try{localStorage.setItem('kj-free-save',JSON.stringify({xp,scrolls,quizDone,questDone,mangerDone,journeyPath,sideQuestStarted,sideQuestStep,sideQuestDone,keepsakes,inventory,equipped,x:player.x,y:player.y,got:scrollItems.map(s=>s.got)}))}catch(e){} updateHud()}
 function updateHud(){
  $('xp').textContent=xp;$('level').textContent=1+Math.floor(xp/50);$('scrolls').textContent=scrolls;
  const objectives={
@@ -94,7 +101,10 @@ function updateHud(){
   seeker:{first:'Find the shepherd and ask about the strange announcement.',scrolls:'Find all three scrolls. Each one is a clue.',manger:'Follow the clues and the star to the manger.',done:'The first mystery is revealed. More discoveries await.'}
  };
  const o=objectives[journeyPath]||objectives.traveler;
- $('questText').textContent=mangerDone?o.done:quizDone&&scrolls>=3?o.manger:quizDone?o.scrolls:o.first;
+ const side=sideQuestDefs[journeyPath];
+ if(sideQuestStarted&&!sideQuestDone&&side){$('questText').textContent=sideQuestStep===0?'Side quest: Find '+side.itemName+'.':side.returnText;}
+ else if(sideQuestDone&&side){$('questText').textContent='Side quest complete: '+side.questTitle+'. Reward: '+side.keepsake+'.';}
+ else {$('questText').textContent=mangerDone?o.done:quizDone&&scrolls>=3?o.manger:quizDone?o.scrolls:o.first;}
 }
 function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
 addEventListener('resize',resize);resize();
@@ -162,6 +172,22 @@ function draw(){
  scrollItems.forEach((it,i)=>{if(it.got)return;let q=point(it.x,it.y);let bob=Math.sin(performance.now()/280+i)*3;ctx.save();ctx.translate(q.x,q.y-17*s+bob);ctx.rotate(Math.sin(performance.now()/500+i)*.08);ctx.fillStyle='#f4d47a';ctx.fillRect(-7*s,-10*s,14*s,20*s);ctx.fillStyle='#8d6534';ctx.fillRect(-7*s,-10*s,3*s,20*s);ctx.fillRect(4*s,-10*s,3*s,20*s);ctx.restore();ctx.fillStyle='#fff3c6';ctx.font=`${Math.max(10,12*s)}px system-ui`;ctx.textAlign='center';ctx.fillText('📜',q.x,q.y-24*s)});
  // shepherd
  {let q=point(shepherd.x,shepherd.y),z=s;drawEllipse(q.x,q.y+9*z,13*z,5*z,'rgba(32,45,33,.22)');ctx.fillStyle='#8e5d40';ctx.fillRect(q.x-8*z,q.y-20*z,16*z,27*z);drawEllipse(q.x,q.y-25*z,8*z,8*z,'#9d704e');ctx.fillStyle='#e4d5b5';ctx.beginPath();ctx.arc(q.x,q.y-28*z,10*z,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle='#4e4439';ctx.fillRect(q.x+8*z,q.y-10*z,3*z,23*z);ctx.fillStyle='#fff3c6';ctx.font=`${Math.max(11,13*z)}px system-ui`;ctx.textAlign='center';ctx.fillText('SHEPHERD',q.x,q.y-43*z)}
+ // Path-specific side-quest character and quest object
+ {const q=sideQuestDefs[journeyPath];if(q){
+  const n=point(q.npcX,q.npcY),z=s;
+  const colors={traveler:'#386a80',helper:'#9c6c36',seeker:'#69558b'};
+  drawEllipse(n.x,n.y+8*z,13*z,5*z,'rgba(32,45,33,.22)');
+  ctx.fillStyle=colors[journeyPath]||'#386a80';ctx.fillRect(n.x-8*z,n.y-19*z,16*z,26*z);
+  drawEllipse(n.x,n.y-24*z,8*z,8*z,'#bd8c68');
+  ctx.fillStyle=journeyPath==='seeker'?'#d8c9ec':'#e4d5b5';ctx.beginPath();ctx.arc(n.x,n.y-27*z,10*z,Math.PI,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff3c6';ctx.font=`${Math.max(10,11*z)}px system-ui`;ctx.textAlign='center';ctx.fillText(q.npcName.split(' the ')[0].toUpperCase(),n.x,n.y-42*z);
+  if(sideQuestStarted&&!sideQuestDone&&sideQuestStep===0){
+   const it=point(q.itemX,q.itemY),bob=Math.sin(performance.now()/250)*3;
+   const glow=ctx.createRadialGradient(it.x,it.y,2,it.x,it.y,25*z);glow.addColorStop(0,'rgba(255,222,120,.38)');glow.addColorStop(1,'rgba(255,222,120,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(it.x,it.y,25*z,0,Math.PI*2);ctx.fill();
+   ctx.font=`${Math.max(20,27*z)}px system-ui`;ctx.textAlign='center';ctx.fillText(journeyPath==='traveler'?'🪧':journeyPath==='helper'?'🥖':'📜',it.x,it.y-12*z+bob);
+   ctx.font=`${Math.max(10,11*z)}px system-ui`;ctx.fillStyle='#fff3c6';ctx.fillText('SIDE QUEST',it.x,it.y-34*z);
+  }
+ }}
  // player, centered-ish in camera view
  {let q=point(player.x,player.y),z=s;if(equipped.includes('lantern')){const glow=ctx.createRadialGradient(q.x,q.y-10*z,2*z,q.x,q.y-10*z,58*z);glow.addColorStop(0,'rgba(255,222,120,.32)');glow.addColorStop(1,'rgba(255,222,120,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(q.x,q.y-10*z,58*z,0,Math.PI*2);ctx.fill()}drawEllipse(q.x,q.y+10*z,13*z,5*z,'rgba(32,45,33,.28)');ctx.fillStyle=equipped.includes('cloak')?'#9e4141':'#284b68';ctx.fillRect(q.x-8*z,q.y-20*z,16*z,27*z);drawEllipse(q.x,q.y-25*z,8*z,8*z,'#d3a17c');ctx.fillStyle='#d8c79e';ctx.beginPath();ctx.arc(q.x,q.y-28*z,10*z,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle='#e8c76b';ctx.beginPath();ctx.moveTo(q.x,q.y-18*z);ctx.lineTo(q.x+14*z,q.y-12*z);ctx.lineTo(q.x,q.y-6*z);ctx.fill()}
  // subtle vignette
@@ -176,12 +202,14 @@ function nearest(){
   {kind:'manger',x:manger.x,y:manger.y,dist:distance(player,manger)}
  ];
  scrollItems.forEach((item,index)=>{if(!item.got)choices.push({kind:'scroll',x:item.x,y:item.y,dist:distance(player,item),index})});
+ const side=sideQuestDefs[journeyPath];
+ if(side){choices.push({kind:'pathNpc',x:side.npcX,y:side.npcY,dist:distance(player,{x:side.npcX,y:side.npcY})});if(sideQuestStarted&&!sideQuestDone&&sideQuestStep===0)choices.push({kind:'questItem',x:side.itemX,y:side.itemY,dist:distance(player,{x:side.itemX,y:side.itemY})})}
  return choices.sort((a,b)=>a.dist-b.dist)[0];
 }
 function setHint(){
  const n=nearest();
  if(n&&n.dist<65){
-  $('hint').textContent=n.kind==='shepherd'?'Tap TALK / INTERACT to speak with the shepherd.':n.kind==='inn'?'Tap TALK / INTERACT to enter the inn and hear a welcome.':n.kind==='market'?'Tap TALK / INTERACT to browse goods at the Bethlehem Market.':n.kind==='manger'?(quizDone&&scrolls>=3?'Chapter 2 awaits: tap to visit the manger.':'Finish the shepherd quest and collect all 3 scrolls to unlock the manger.'):'Tap TALK / INTERACT to collect a Scripture scroll.';
+  $('hint').textContent=n.kind==='pathNpc'?'Tap TALK / INTERACT to speak with '+sideQuestDefs[journeyPath].npcName+'.':n.kind==='questItem'?'Tap TALK / INTERACT to collect the side-quest item.':n.kind==='shepherd'?'Tap TALK / INTERACT to speak with the shepherd.':n.kind==='inn'?'Tap TALK / INTERACT to enter the inn and hear a welcome.':n.kind==='market'?'Tap TALK / INTERACT to browse goods at the Bethlehem Market.':n.kind==='manger'?(quizDone&&scrolls>=3?'Chapter 2 awaits: tap to visit the manger.':'Finish the shepherd quest and collect all 3 scrolls first.'):'Tap TALK / INTERACT to collect a Scripture scroll.';
  }else $('hint').textContent='Explore the hillside. Use the arrows to move.';
 }
 function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').style.display='none',1700)}
@@ -264,10 +292,39 @@ function openInnWelcome(){
  $('ok').onclick=()=>journeyPath?closeCard():chooseJourneyPath();
  $('innInventory').onclick=()=>openInventory(true);
 }
+function offerSideQuest(){
+ const q=sideQuestDefs[journeyPath];if(!q)return;
+ if(sideQuestDone){openCard('<div class="eyebrow">Side quest complete</div><h2>'+q.questTitle+'</h2><p>'+q.npcName+' smiles as you remember your adventure together.</p><p><strong>Keepsake:</strong> '+q.keepsake+'</p><div class="bottomrow"><button id="sideQuestClose">Continue exploring</button></div>');$('sideQuestClose').onclick=closeCard;return;}
+ if(sideQuestStarted){
+  if(sideQuestStep===0){openCard('<div class="eyebrow">Side quest · '+q.npcName+'</div><h2>'+q.questTitle+'</h2><p>'+q.questText+'</p><p><strong>Objective:</strong> Find the '+q.itemName+'.</p><div class="bottomrow"><button id="sideQuestClose">Back to the road</button></div>');$('sideQuestClose').onclick=closeCard;}
+  else if(journeyPath!=='helper')completeSideQuest();
+  else {openCard('<div class="eyebrow">Delivery in progress</div><h2>'+q.questTitle+'</h2><p>You have the bread basket. Find the shepherd on the hillside to deliver it.</p><div class="bottomrow"><button id="sideQuestClose">Continue</button></div>');$('sideQuestClose').onclick=closeCard;}
+  return;
+ }
+ openCard('<div class="eyebrow">Exclusive side quest · '+q.npcName+'</div><h2>'+q.questTitle+'</h2><p>'+q.npcName+' approaches you with a request.</p><p>'+q.questText+'</p><p><strong>Reward:</strong> '+q.reward+' XP and '+q.keepsake+'.</p><div class="bottomrow"><button class="secondary" id="sideQuestLater">Maybe later</button><button id="sideQuestAccept">Accept quest</button></div>');
+ $('sideQuestLater').onclick=closeCard;
+ $('sideQuestAccept').onclick=()=>{sideQuestStarted=true;sideQuestStep=0;save();closeCard();toast('Side quest accepted! Find the '+q.itemName+'.')};
+}
+function collectSideQuestItem(){
+ const q=sideQuestDefs[journeyPath];if(!q||!sideQuestStarted||sideQuestDone)return;
+ sideQuestStep=1;save();
+ const found=journeyPath==='traveler'?'You spot the bronze marker tucked beside the path.':journeyPath==='helper'?'You find Eli’s basket of fresh bread resting beside the road.':'You uncover a torn parchment fragment with a few mysterious words still visible.';
+ const next=journeyPath==='helper'?'Take the bread to the shepherd on the hillside.':'Bring the item back to '+q.npcName+'.';
+ openCard('<div class="eyebrow">Side quest discovery</div><h2>'+q.itemName.charAt(0).toUpperCase()+q.itemName.slice(1)+' found!</h2><p>'+found+'</p><p><strong>Next:</strong> '+next+'</p><div class="bottomrow"><button id="sideQuestContinue">Continue</button></div>');
+ $('sideQuestContinue').onclick=closeCard;toast('Side quest item found!');
+}
+function completeSideQuest(){
+ const q=sideQuestDefs[journeyPath];if(!q||sideQuestDone||sideQuestStep!==1)return;
+ sideQuestDone=true;xp+=q.reward;if(!keepsakes.includes(q.keepsake))keepsakes.push(q.keepsake);save();
+ openCard('<div class="eyebrow">Side quest complete</div><h2>Well done!</h2><p>'+q.rewardText+'</p><p><strong>Reward received:</strong> +'+q.reward+' XP</p><p><strong>Journal keepsake:</strong> '+q.keepsake+'</p><div class="bottomrow"><button id="sideQuestRewardClose">Continue the journey</button></div>');
+ $('sideQuestRewardClose').onclick=closeCard;
+}
 function interact(){
  if(interacting)return;
  const n=nearest();
  if(!n||n.dist>70){toast('Move closer to a person or scroll.');return;}
+ if(n.kind==='pathNpc'){offerSideQuest();return;}
+ if(n.kind==='questItem'){collectSideQuestItem();return;}
  if(n.kind==='inn'){openInnWelcome();return;}
  if(n.kind==='market'){openMarket();return;}
  if(n.kind==='manger'){
@@ -276,6 +333,7 @@ function interact(){
   startChapterTwo();return;
  }
  if(n.kind==='shepherd'){
+  if(journeyPath==='helper'&&sideQuestStarted&&!sideQuestDone&&sideQuestStep===1){completeSideQuest();return;}
   if(quizDone){
    openCard(`<div class="eyebrow">Luke 2:8–20</div><h2>Peace and good news</h2><p>The shepherds went to Bethlehem and shared what they had been told. The story invites us to respond with wonder, gratitude, and hope.</p><p><strong>Scripture to read:</strong> Luke 2:8–20</p><div class="bottomrow"><button id="ok">Continue exploring</button></div>`);
    $('ok').onclick=closeCard;
@@ -295,6 +353,8 @@ $('run').addEventListener('click',()=>{running=!running;$('run').textContent=run
 
 $('inventory').addEventListener('click',openInventory);
 function openJournal(){
+ const side=sideQuestDefs[journeyPath];
+ const sideQuestJournal=side?'<div style="border:1px solid #d4c9af;border-radius:14px;padding:12px;margin:12px 0;background:#fffaf0"><div class="eyebrow">Path-exclusive side quest</div><strong>'+side.questTitle+'</strong><p style="font-size:12px;margin:6px 0">'+(sideQuestDone?'✓ Completed':sideQuestStarted?(sideQuestStep===0?'In progress: find '+side.itemName+'.':side.returnText):'Not started: speak with '+side.npcName+'.')+'</p><p style="font-size:12px;margin:6px 0"><strong>Reward:</strong> '+side.reward+' XP · '+side.keepsake+'</p>'+(keepsakes.length?'<p style="font-size:12px;margin:6px 0"><strong>Keepsakes earned:</strong> '+keepsakes.join(', ')+'</p>':'')+'</div>':'';
  const notes=[
   {title:'The Angel’s Announcement',ref:'Luke 2:9–10',text:'An angel of the Lord appears to the shepherds, announcing good news and great joy for all the people.',reflection:'What kind of news brings you hope when life feels uncertain?'},
   {title:'A Sign for the Shepherds',ref:'Luke 2:11–12',text:'The shepherds are told they will find a baby wrapped in cloths and lying in a manger.',reflection:'Why might an ordinary, humble sign carry extraordinary meaning?'},
@@ -308,7 +368,7 @@ function openJournal(){
  const chapterCards=chapters.map((ch,i)=>'<div style="border:1px solid #d4c9af;border-radius:14px;padding:13px;margin:9px 0;background:#fffaf0"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#8b6322">CHAPTER '+(i+1)+'</div><strong>'+ch.title+'</strong></div><div style="font-size:24px">'+(ch.done?'📜':'🔒')+'</div></div><p style="font-size:12px;margin:7px 0">'+ch.summary+'</p><p style="font-size:11px;margin:5px 0"><strong>Scripture:</strong> '+ch.ref+'</p><p style="font-size:11px;margin:8px 0">'+stamp(ch.done)+'</p><div style="font-size:11px;color:#655b49">'+(ch.done?'Reward recorded: '+ch.reward:'Reward: '+ch.reward)+'</div></div>').join('');
  const collected=notes.filter((n,i)=>scrollItems[i]&&scrollItems[i].got);
  const noteCards=collected.length?collected.map(n=>'<div style="border-left:4px solid #c39b4b;padding:10px 12px;margin:10px 0;background:#fffaf0;border-radius:0 12px 12px 0"><div style="font-size:10px;color:#8b6322;font-weight:800;letter-spacing:.08em">SCRIPTURE NOTE</div><strong>'+n.title+'</strong><div style="font-size:11px;color:#655b49;margin-top:3px">'+n.ref+'</div><p style="font-size:13px;margin:7px 0">'+n.text+'</p><p style="font-size:12px;margin:6px 0"><strong>Reflect:</strong> '+n.reflection+'</p></div>').join(''):'<div style="border:1px dashed #b9aa8d;border-radius:14px;padding:18px;text-align:center;background:#fffaf0"><div style="font-size:30px">📜</div><strong>No Scripture notes collected yet</strong><p style="font-size:13px">Explore the hillside and collect the three glowing scrolls. Each one adds a note to this journal.</p></div>';
- openCard('<div class="eyebrow">A record of your journey</div><h2>Traveler’s Journal</h2><p style="font-size:13px">Your story, completed quests, and Scripture discoveries, gathered in one place.</p><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0"><div style="background:#e8dfc9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:19px">⭐</div><strong>'+xp+'</strong><div style="font-size:10px">XP earned</div></div><div style="background:#e8dfc9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:19px">📜</div><strong>'+scrolls+'/3</strong><div style="font-size:10px">Scrolls found</div></div><div style="background:#e8dfc9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:19px">🏅</div><strong>'+chapters.filter(ch=>ch.done).length+'/2</strong><div style="font-size:10px">Quests stamped</div></div></div><div class="eyebrow" style="margin-top:16px">Chapter entries</div>'+chapterCards+'<div class="eyebrow" style="margin-top:18px">Collected Scripture notes · '+collected.length+'/3</div>'+noteCards+'<div style="border-top:1px solid #d4c9af;margin-top:16px;padding-top:12px;font-size:11px;color:#655b49">Your journal updates as you complete quests and collect scrolls. Progress is saved on this device.</div><div class="bottomrow"><button id="journalClose">Close journal</button></div>');
+ openCard('<div class="eyebrow">A record of your journey</div><h2>Traveler’s Journal</h2><p style="font-size:13px">Your story, completed quests, and Scripture discoveries, gathered in one place.</p>'+sideQuestJournal+'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0"><div style="background:#e8dfc9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:19px">⭐</div><strong>'+xp+'</strong><div style="font-size:10px">XP earned</div></div><div style="background:#e8dfc9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:19px">📜</div><strong>'+scrolls+'/3</strong><div style="font-size:10px">Scrolls found</div></div><div style="background:#e8dfc9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:19px">🏅</div><strong>'+chapters.filter(ch=>ch.done).length+'/2</strong><div style="font-size:10px">Quests stamped</div></div></div><div class="eyebrow" style="margin-top:16px">Chapter entries</div>'+chapterCards+'<div class="eyebrow" style="margin-top:18px">Collected Scripture notes · '+collected.length+'/3</div>'+noteCards+'<div style="border-top:1px solid #d4c9af;margin-top:16px;padding-top:12px;font-size:11px;color:#655b49">Your journal updates as you complete quests and collect scrolls. Progress is saved on this device.</div><div class="bottomrow"><button id="journalClose">Close journal</button></div>');
  $('journalClose').onclick=closeCard;
 }
 $('journal').addEventListener('click',openJournal);
