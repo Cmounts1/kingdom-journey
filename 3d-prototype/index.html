@@ -203,53 +203,21 @@ const buildings=[
 ];
 // The wider 3D world mirrors the 2D journey landmarks and collectibles.
 const worldObjects={
- shepherd:{x:7,z:-14},
- market:{x:-10,z:2},
- manger:{x:11,z:-20.5},
- scrolls:[{x:-8,z:-7,got:false},{x:8,z:-9,got:false},{x:-3,z:-18,got:false}],
+ shepherd:{x:8,z:-14},
+ market:{x:-7,z:2.5},
+ manger:{x:0,z:-21.5},
+ scrolls:[{x:-7,z:-8,got:false},{x:8,z:-7,got:false},{x:-5,z:-17,got:false}],
  sideNpcs:{
-  traveler:{x:-15,z:-6,name:'Mara the Wayfinder'},
-  helper:{x:-10,z:5,name:'Eli the Baker'},
-  seeker:{x:4,z:-18,name:'Natan the Scroll Keeper'}
+  traveler:{x:-9,z:-1,name:'Mara the Wayfinder'},
+  helper:{x:-7,z:5,name:'Eli the Baker'},
+  seeker:{x:8,z:-17,name:'Natan the Scroll Keeper'}
  },
  sideItems:{
-  traveler:{x:-11,z:-10,name:'bronze road marker',icon:'🪧'},
-  helper:{x:-5,z:7,name:'basket of fresh bread',icon:'🥖'},
-  seeker:{x:1,z:-14,name:'torn parchment clue',icon:'📜'}
+  traveler:{x:-5,z:-12,name:'bronze road marker',icon:'🪧'},
+  helper:{x:-3,z:3,name:'basket of fresh bread',icon:'🥖'},
+  seeker:{x:5,z:-12,name:'torn parchment clue',icon:'📜'}
  }
 };
-const worldDecor=new THREE.Group();scene.add(worldDecor);
-function signBoard(x,z,labelColor=materials.gold){
- const post=cylinder(.055,.07,1.2,materials.wood,x,.6,z,7,worldDecor);
- const board=box(.9,.48,.12,materials.darkWood,x,1.35,z,worldDecor);
- box(.72,.28,.025,labelColor,x,1.35,z+.075,worldDecor);
- return board;
-}
-// Bethlehem market stall and colorful goods.
-box(3,.16,1.8,materials.wood,-10,.12,2,worldDecor);
-for(const x of [-11.25,-10,-8.75])cylinder(.06,.07,2.15,materials.wood,x,1.08,2,7,worldDecor);
-box(3.2,.14,1.9,materials.roofLight,-10,2.18,2,worldDecor);
-for(const x of [-11,-10,-9]){
- sphere(.18,materials.gold,x,.48,1.65,worldDecor,1);
- box(.35,.32,.32,materials.leaf,x,.42,2.15,worldDecor);
-}
-signBoard(-10,3.1,materials.trim);
-// Stable and manger, lit by the star.
-box(4,.18,3,materials.wood,11,.08,-20.5,worldDecor);
-box(4,2.4,.18,materials.wallShade,11,1.2,-22,worldDecor);
-box(.18,2.4,3,materials.wallShade,9,1.2,-20.5,worldDecor);
-box(.18,2.4,3,materials.wallShade,13,1.2,-20.5,worldDecor);
-const stableRoof=mesh(new THREE.ConeGeometry(3.1,1.8,4),materials.roof,11,3,-20.5,worldDecor);stableRoof.rotation.y=Math.PI/4;stableRoof.scale.z=.8;
-box(1.35,.45,.55,materials.wood,11, .42,-20.1,worldDecor);
-box(1.12,.12,.42,materials.trim,11,.68,-20.1,worldDecor);
-const starShape=new THREE.Shape();
-for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?0.22:0.5,x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)starShape.moveTo(x,y);else starShape.lineTo(x,y)}
-starShape.closePath();
-const star=mesh(new THREE.ShapeGeometry(starShape),new THREE.MeshBasicMaterial({color:'#ffe58a',side:THREE.DoubleSide}),11,5,-20.2,worldDecor);
-const starLight=new THREE.PointLight('#ffe58a',1.7,8);starLight.position.set(11,4.7,-19.5);worldDecor.add(starLight);
-// Decorative paths lead between the story locations.
-function pathStone(x,z){const s=box(.55,.07,.7,materials.stone,x,.05,z,worldDecor);s.rotation.y=.12}
-for(let i=0;i<9;i++){pathStone(-.9-i*.8,-5-i*1.1);pathStone(1+i*.7,-12-i*.8)}
 
 // Player: more natural storybook traveler with layered clothing and articulated limbs.
 const player=new THREE.Group();scene.add(player);player.position.set(0,0,7);
@@ -319,44 +287,6 @@ smoothSphere(.205,.12,.045,leatherLight,0,1.30,.435);
 box(.10,.08,.035,metalMat,0,1.25,.466,body);
 limb(.035,.035,.88,leatherLight,-.13,1.25,.02,-.20,-.36,body);
 
-// Story characters and collectible objects, each with a clear silhouette.
-function makeVillager(x,z,coat,hat=materials.hair,scale=1){
- const g=new THREE.Group();scene.add(g);g.position.set(x,0,z);g.scale.setScalar(scale);
- mesh(new THREE.CylinderGeometry(.27,.34,.82,10),coat,0,1.05,0,g);
- limb(.09,.1,.16,skinMat,0,1.53,0,0,0,g);
- smoothSphere(.22,.27,.21,skinMat,0,1.78,-.015,g);
- smoothSphere(.22,.13,.21,hat,0,1.99,.01,g);
- smoothSphere(.035,.045,.025,eyeMat,-.07,1.8,-.205,g);
- smoothSphere(.035,.045,.025,eyeMat,.07,1.8,-.205,g);
- limb(.095,.075,.36,coat,-.31,1.15,0,0,0,g);
- limb(.095,.075,.36,coat,.31,1.15,0,0,0,g);
- limb(.11,.09,.43,materials.trousers,-.14,.38,0,0,0,g);
- limb(.11,.09,.43,materials.trousers,.14,.38,0,0,0,g);
- smoothSphere(.12,.07,.17,materials.boot,-.14,.09,-.045,g);
- smoothSphere(.12,.07,.17,materials.boot,.14,.09,-.045,g);
- return g;
-}
-const shepherdActor=makeVillager(worldObjects.shepherd.x,worldObjects.shepherd.z,materials.roofLight,materials.trim,1.05);
-const sideActors={
- traveler:makeVillager(worldObjects.sideNpcs.traveler.x,worldObjects.sideNpcs.traveler.z,materials.cloth,materials.hair,.98),
- helper:makeVillager(worldObjects.sideNpcs.helper.x,worldObjects.sideNpcs.helper.z,materials.roofLight,materials.trim,.98),
- seeker:makeVillager(worldObjects.sideNpcs.seeker.x,worldObjects.sideNpcs.seeker.z,materials.leaf,materials.hair,1)
-};
-const scrollMeshes=worldObjects.scrolls.map((p,i)=>{
- const g=new THREE.Group();scene.add(g);g.position.set(p.x,.65,p.z);
- const paper=box(.28,.42,.07,materials.trim,0,0,0,g);
- box(.05,.44,.085,materials.roofLight,-.105,0,.015,g);
- box(.05,.44,.085,materials.roofLight,.105,0,.015,g);
- g.rotation.y=.18+i*.3;return g;
-});
-const questItemMeshes={
- traveler:signBoard(worldObjects.sideItems.traveler.x,worldObjects.sideItems.traveler.z,materials.gold),
- helper:box(.5,.35,.4,materials.wood,worldObjects.sideItems.helper.x,.3,worldObjects.sideItems.helper.z),
- seeker:box(.32,.06,.25,materials.trim,worldObjects.sideItems.seeker.x,.08,worldObjects.sideItems.seeker.z)
-};
-questItemMeshes.traveler.position.y=.6;
-const itemGlow=new THREE.PointLight('#f5cc72',.8,5);itemGlow.position.set(-11,1.3,-10);scene.add(itemGlow);
-
 // Controls: keyboard + accessible touch joystick.
 const keys=new Set();
 addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key===' '||e.key==='Enter'){interact();return}keys.add(e.key.toLowerCase());});
@@ -375,59 +305,53 @@ function releaseJoy(){pointer=null;joyX=0;joyY=0;stick.style.transform='translat
 zone.addEventListener('pointerup',releaseJoy);zone.addEventListener('pointercancel',releaseJoy);zone.addEventListener('lostpointercapture',releaseJoy);
 
 const message=document.querySelector('#message');
-const overlay=document.querySelector('#overlay'),card=document.querySelector('#card'),toastEl=document.querySelector('#toast');
-const $=id=>document.getElementById(id);
-const saveKey='kj-3d-save';
-const saved=(()=>{try{return JSON.parse(localStorage.getItem(saveKey)||'{}')}catch(e){return {}}})();
-let xp=Number(saved.xp)||0,scrolls=Number(saved.scrolls)||0,quizDone=!!saved.quizDone,mangerDone=!!saved.mangerDone;
-let journeyPath=['traveler','helper','seeker'].includes(saved.journeyPath)?saved.journeyPath:'';
-let sideQuestStarted=!!saved.sideQuestStarted,sideQuestStep=Number(saved.sideQuestStep)||0,sideQuestDone=!!saved.sideQuestDone;
-let inventory=Array.isArray(saved.inventory)?saved.inventory:[];
-let equipped=Array.isArray(saved.equipped)?saved.equipped:[];
-let keepsakes=Array.isArray(saved.keepsakes)?saved.keepsakes:[];
-worldObjects.scrolls.forEach((s,i)=>s.got=!!(saved.got&&saved.got[i]));
-scrollMeshes.forEach((m,i)=>m.visible=!worldObjects.scrolls[i].got);
-let entered=false,currentBuilding=null,running=false;
 const interactButton=document.querySelector('#interact');
 const hintEl=$('hint'),questEl=$('quest'),statsEl=$('stats'),topHint=document.querySelector('.hint');
+let entered=false,currentBuilding=null;
+worldObjects.scrolls.forEach((s,i)=>s.got=!!gotScrolls[i]);
+scrollMeshes.forEach((m,i)=>m.visible=!worldObjects.scrolls[i].got);
 function persist(){
- try{localStorage.setItem(saveKey,JSON.stringify({xp,scrolls,quizDone,mangerDone,journeyPath,sideQuestStarted,sideQuestStep,sideQuestDone,inventory,equipped,keepsakes,got:worldObjects.scrolls.map(s=>s.got)}))}catch(e){}
+ gotScrolls=worldObjects.scrolls.map(s=>s.got);
+ try{localStorage.setItem(saveKey,JSON.stringify({xp,scrolls,quizDone,questDone,mangerDone,journeyPath,sideQuestStarted,sideQuestStep,sideQuestDone,inventory,equipped,keepsakes,gotScrolls,x:player.position.x,z:player.position.z}))}catch(e){}
  updateHud();
 }
 function updateHud(){
  $('xp').textContent=xp;$('level').textContent=1+Math.floor(xp/50);$('scrolls').textContent=scrolls;
- const side=journeyPath?sideQuestDefs[journeyPath]:null;
- if(sideQuestDone&&side) $('questText').textContent='Side quest complete: '+side.questTitle+' · '+side.keepsake;
- else if(sideQuestStarted&&side) $('questText').textContent=sideQuestStep===0?'Side quest: Find '+side.itemName+'.':journeyPath==='helper'?'Deliver the bread basket to the shepherd.':'Return to '+side.npcName+'.';
- else if(!journeyPath)$('questText').textContent='Choose your path to begin.';
+ const q=journeyPath?sideQuestDefs[journeyPath]:null;
+ if(!journeyPath)$('questText').textContent='Choose your path to begin.';
+ else if(sideQuestDone&&q)$('questText').textContent='Side quest complete: '+q.questTitle+' · '+q.keepsake;
+ else if(sideQuestStarted&&q) $('questText').textContent=sideQuestStep===0?'Side quest: Find '+q.itemName+'.':journeyPath==='helper'?'Deliver the bread basket to the shepherd.':q.returnText;
  else if(!quizDone)$('questText').textContent=journeyPath==='seeker'?'Find the shepherd and ask about the strange announcement.':journeyPath==='helper'?'Meet the shepherd and learn the good news to share.':'Meet the shepherd and hear the announcement.';
  else if(scrolls<3)$('questText').textContent=journeyPath==='seeker'?'Find all three scrolls. Each one is a clue.':'Gather the three Scripture scrolls along the road.';
  else if(!mangerDone)$('questText').textContent='Follow the star to the manger in Bethlehem.';
  else $('questText').textContent='Chapter 2 complete. Keep exploring Bethlehem.';
 }
 function toast(msg){toastEl.textContent=msg;toastEl.style.display='block';clearTimeout(window.kjToastTimer);window.kjToastTimer=setTimeout(()=>toastEl.style.display='none',1900)}
-function openCard(content){card.innerHTML=content;overlay.style.display='flex';}
+function openCard(content){card.innerHTML=content;overlay.style.display='flex'}
 function closeCard(){overlay.style.display='none'}
 overlay.addEventListener('click',e=>{if(e.target===overlay)closeCard()});
+function syncQuestItems(){
+ ['traveler','helper','seeker'].forEach(p=>{if(questItemMeshes[p])questItemMeshes[p].visible=journeyPath===p&&sideQuestStarted&&!sideQuestDone&&sideQuestStep===0});
+}
 function closestEntrance(){
  let best=null,dBest=Infinity;
  for(const b of buildings){const d=Math.hypot(player.position.x-b.doorX,player.position.z-b.doorZ);if(d<dBest){best=b;dBest=d}}
  return dBest<2.65?best:null;
 }
-function near(a){return Math.hypot(player.position.x-a.x,player.position.z-a.z)}
+function distanceTo(a){return Math.hypot(player.position.x-a.x,player.position.z-a.z)}
 function nearestAction(){
  const choices=[
-  {kind:'shepherd',...worldObjects.shepherd},
-  {kind:'market',...worldObjects.market},
-  {kind:'manger',...worldObjects.manger}
+  {kind:'shepherd',x:worldObjects.shepherd.x,z:worldObjects.shepherd.z},
+  {kind:'market',x:worldObjects.market.x,z:worldObjects.market.z},
+  {kind:'manger',x:worldObjects.manger.x,z:worldObjects.manger.z}
  ];
- worldObjects.scrolls.forEach((s,i)=>{if(!s.got)choices.push({kind:'scroll',...s,index:i})});
+ worldObjects.scrolls.forEach((s,i)=>{if(!s.got)choices.push({kind:'scroll',x:s.x,z:s.z,index:i})});
  if(journeyPath){
-  const npc=worldObjects.sideNpcs[journeyPath],item=worldObjects.sideItems[journeyPath];
-  if(npc)choices.push({kind:'pathNpc',...npc});
-  if(sideQuestStarted&&!sideQuestDone&&sideQuestStep===0&&item)choices.push({kind:'questItem',...item});
+  const q=sideQuestDefs[journeyPath];
+  if(q)choices.push({kind:'pathNpc',x:q.x,z:q.z});
+  if(sideQuestStarted&&!sideQuestDone&&sideQuestStep===0&&q)choices.push({kind:'questItem',x:q.itemX,z:q.itemZ});
  }
- choices.forEach(c=>c.dist=near(c));
+ choices.forEach(c=>c.dist=distanceTo({x:c.x,z:c.z}));
  return choices.sort((a,b)=>a.dist-b.dist)[0];
 }
 function chooseJourneyPath(){
@@ -437,7 +361,7 @@ function chooseJourneyPath(){
   {id:'seeker',icon:'🔎',name:'The Mystery Seeker',tag:'Follow the clues',text:'Search for scattered scrolls, connect their messages, and uncover the mystery surrounding the child in the manger.'}
  ];
  openCard('<div class="eyebrow">Your adventure begins</div><h2>Choose your path</h2><p>Every path follows the same biblical story, but your purpose changes your side quest and guidance.</p>'+paths.map(p=>'<button class="choice" data-path="'+p.id+'"><strong style="font-size:18px">'+p.icon+' '+p.name+'</strong><p>'+p.text+'</p><small>'+p.tag+'</small></button>').join(''));
- card.querySelectorAll('[data-path]').forEach(btn=>btn.onclick=()=>{journeyPath=btn.dataset.path;persist();closeCard();openInnWelcome()});
+ card.querySelectorAll('[data-path]').forEach(btn=>btn.onclick=()=>{journeyPath=btn.dataset.path;persist();syncQuestItems();closeCard();openInnWelcome()});
 }
 function openInnWelcome(){
  const p=journeyPath==='helper'?'The Helper, looking for ways to serve and share hope.':journeyPath==='seeker'?'The Mystery Seeker, following clues hidden in the story.':'The Traveler, following the road and meeting the people of Bethlehem.';
@@ -453,39 +377,37 @@ function offerSideQuest(){
   completeSideQuest();return;
  }
  openCard('<div class="eyebrow">Exclusive side quest · '+q.npcName+'</div><h2>'+q.questTitle+'</h2><p>'+q.npcName+' approaches you with a request.</p><p>'+q.questText+'</p><p><strong>Reward:</strong> '+q.reward+' XP and '+q.keepsake+'.</p><div class="bottomrow"><button class="secondary" id="questLater">Maybe later</button><button id="questAccept">Accept quest</button></div>');
- $('questLater').onclick=closeCard;$('questAccept').onclick=()=>{sideQuestStarted=true;sideQuestStep=0;persist();closeCard();toast('Side quest accepted! Find the '+q.itemName+'.')};
+ $('questLater').onclick=closeCard;$('questAccept').onclick=()=>{sideQuestStarted=true;sideQuestStep=0;persist();syncQuestItems();closeCard();toast('Side quest accepted! Find the '+q.itemName+'.')};
 }
 function collectQuestItem(){
  const q=sideQuestDefs[journeyPath];if(!q||!sideQuestStarted||sideQuestDone)return;
- sideQuestStep=1;persist();
+ sideQuestStep=1;persist();syncQuestItems();
  const found=journeyPath==='traveler'?'You spot the bronze road marker beside the path.':journeyPath==='helper'?'You find Eli’s basket of fresh bread beside the road.':'You uncover a torn parchment fragment with mysterious words.';
  openCard('<div class="eyebrow">Side quest discovery</div><h2>'+q.itemName.charAt(0).toUpperCase()+q.itemName.slice(1)+' found!</h2><p>'+found+'</p><p><strong>Next:</strong> '+(journeyPath==='helper'?'Take the bread to the shepherd.':'Bring it back to '+q.npcName+'.')+'</p><div class="bottomrow"><button id="foundClose">Continue</button></div>');
  $('foundClose').onclick=closeCard;
- if(questItemMeshes[journeyPath])questItemMeshes[journeyPath].visible=false;
 }
 function completeSideQuest(){
  const q=sideQuestDefs[journeyPath];if(!q||sideQuestDone||sideQuestStep!==1)return;
- sideQuestDone=true;xp+=q.reward;if(!keepsakes.includes(q.keepsake))keepsakes.push(q.keepsake);persist();
+ sideQuestDone=true;xp+=q.reward;if(!keepsakes.includes(q.keepsake))keepsakes.push(q.keepsake);persist();syncQuestItems();
  openCard('<div class="eyebrow">Side quest complete</div><h2>Well done!</h2><p>'+q.rewardText+'</p><p><strong>Reward:</strong> +'+q.reward+' XP</p><p><strong>Journal keepsake:</strong> '+q.keepsake+'</p><div class="bottomrow"><button id="rewardClose">Continue the journey</button></div>');
  $('rewardClose').onclick=closeCard;
 }
 function startShepherdQuiz(){
  const pathIntro=journeyPath==='helper'?'The shepherd is eager to share the news, but does not know who will listen.':journeyPath==='seeker'?'The shepherd describes a strange announcement. Listen closely for the first clue.':'An extraordinary announcement interrupted an ordinary night on the hills.';
  openCard('<div class="eyebrow">Shepherds’ hillside · Luke 2:8–20</div><h2>Good news in Bethlehem</h2><p>'+pathIntro+'</p><p><strong>According to Luke 2, who brought the good news to the shepherds?</strong></p><div id="answers"></div><p id="feedback" aria-live="polite"></p><div class="bottomrow"><button class="secondary" id="quizLater">Not now</button></div>');
- const answers=[['An angel of the Lord',true],['A Roman messenger',false],['A merchant from Bethlehem',false]];
- answers.forEach(([label,correct])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(quizDone){$('feedback').textContent='You have already completed this question.';return}if(correct){$('feedback').textContent='Correct! Luke 2:9 says an angel of the Lord stood by them. +25 XP';xp+=25;quizDone=true;persist();setTimeout(()=>{closeCard();toast('Quest complete! +25 XP')},900)}else $('feedback').textContent='Not quite. Read Luke 2:9 and try again.'};$('answers').appendChild(b)});
+ [['An angel of the Lord',true],['A Roman messenger',false],['A merchant from Bethlehem',false]].forEach(([label,correct])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(quizDone){$('feedback').textContent='You have already completed this question.';return}if(correct){$('feedback').textContent='Correct! Luke 2:9 says an angel of the Lord stood by them. +25 XP';xp+=25;quizDone=true;questDone=true;persist();setTimeout(()=>{closeCard();toast('Quest complete! +25 XP')},900)}else $('feedback').textContent='Not quite. Read Luke 2:9 and try again.'};$('answers').appendChild(b)});
  $('quizLater').onclick=closeCard;
 }
 function collectScroll(index){
  const s=worldObjects.scrolls[index];if(!s||s.got)return;
- s.got=true;scrolls++;xp+=5;scrollMeshes[index].visible=false;persist();
+ s.got=true;gotScrolls[index]=true;scrolls++;xp+=5;scrollMeshes[index].visible=false;persist();
  toast((journeyPath==='seeker'?'Clue discovered!':journeyPath==='helper'?'Good news gathered!':'Scripture scroll collected!')+' +5 XP');
  if(scrolls>=3)openCard('<div class="eyebrow">Chapter 1 complete</div><h2>Three scrolls collected!</h2><p>You have gathered every scroll scattered across the hillside. Your next destination is the manger in Bethlehem.</p><p><strong>Chapter 2 unlocked:</strong> Follow the star and discover the sign described in Luke 2:12–16.</p><div class="bottomrow"><button id="scrollClose">Continue exploring</button></div>');
  if($('scrollClose'))$('scrollClose').onclick=closeCard;
 }
 function startChapterTwo(){
  openCard('<div class="eyebrow">Chapter 2 · Luke 2:12–16</div><h2>A Sign in the Manger</h2><p>You follow the star to Bethlehem. Mary and Joseph care for the newborn child in a humble stable.</p><p><strong>What sign did the angel tell the shepherds to look for?</strong></p><div id="chapterAnswers"></div><p id="chapterFeedback" aria-live="polite"></p><div class="bottomrow"><button class="secondary" id="chapterLater">Read later</button></div>');
- [['A child lying in a manger',true],['A royal crown in a palace',false],['A new star inside the temple',false]].forEach(([label,correct])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(mangerDone)return;if(correct){mangerDone=true;xp+=30;persist();$('chapterFeedback').textContent='Correct! Luke 2:12 describes the sign. +30 XP';setTimeout(()=>{closeCard();openCard('<div class="eyebrow">Chapter 2 complete</div><h2>Good news, shared with wonder</h2><p>The shepherds found Mary, Joseph, and the child, just as they had been told.</p><p><strong>Scripture:</strong> Luke 2:12–16</p><p><strong>Reward:</strong> 30 XP · Chapter 2 recorded in your journal.</p><div class="bottomrow"><button id="chapterDone">Continue exploring</button></div>');$('chapterDone').onclick=closeCard},800)}else $('chapterFeedback').textContent='Not quite. Read Luke 2:12 and try again.'};$('chapterAnswers').appendChild(b)});
+ [['A child lying in a manger',true],['A royal crown in a palace',false],['A new star inside the temple',false]].forEach(([label,correct])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(mangerDone)return;if(correct){mangerDone=true;questDone=true;xp+=30;persist();$('chapterFeedback').textContent='Correct! Luke 2:12 describes the sign. +30 XP';setTimeout(()=>{closeCard();openCard('<div class="eyebrow">Chapter 2 complete</div><h2>Good news, shared with wonder</h2><p>The shepherds found Mary, Joseph, and the child, just as they had been told.</p><p><strong>Scripture:</strong> Luke 2:12–16</p><p><strong>Reward:</strong> 30 XP · Chapter 2 recorded in your journal.</p><div class="bottomrow"><button id="chapterDone">Continue exploring</button></div>');$('chapterDone').onclick=closeCard},800)}else $('chapterFeedback').textContent='Not quite. Read Luke 2:12 and try again.'};$('chapterAnswers').appendChild(b)});
  $('chapterLater').onclick=closeCard;
 }
 const gear=[
@@ -507,7 +429,7 @@ function openInventory(fromInn=false){
 function openJournal(){
  const q=journeyPath?sideQuestDefs[journeyPath]:null;
  const notes=['The Angel’s Announcement · Luke 2:9–10','A Sign for the Shepherds · Luke 2:11–12','Wonder Shared with Others · Luke 2:15–20'];
- openCard('<div class="eyebrow">A record of your journey</div><h2>Traveler’s Journal</h2><p>Your story, completed quests, and Scripture discoveries, gathered in one place.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="stat">⭐ '+xp+' XP</div><div class="stat">📜 '+scrolls+'/3 scrolls</div><div class="stat">🏅 '+(Number(quizDone)+Number(mangerDone))+'/2 chapters</div></div><h3>Chapter entries</h3><p>'+(quizDone?'✓':'○')+' Chapter 1: The Shepherds’ Announcement · Luke 2:8–20 · 25 XP</p><p>'+(mangerDone?'✓':'○')+' Chapter 2: A Sign in the Manger · Luke 2:12–16 · 30 XP</p><h3>Scripture notes</h3>'+(notes.filter((n,i)=>worldObjects.scrolls[i].got).map(n=>'<p>📜 '+n+'</p>').join('')||'<p>Collect the three glowing scrolls to add Scripture notes.</p>')+(q?'<h3>Path-exclusive side quest</h3><p><strong>'+q.questTitle+'</strong></p><p>'+(sideQuestDone?'✓ Completed':sideQuestStarted?(sideQuestStep===0?'In progress: find '+q.itemName+'.':q.returnText):'Not started: speak with '+q.npcName+'.')+'</p><p><strong>Reward:</strong> '+q.reward+' XP · '+q.keepsake+'</p>':'')+(keepsakes.length?'<p><strong>Keepsakes earned:</strong> '+keepsakes.join(', ')+'</p>':'')+'<div class="bottomrow"><button id="journalClose">Close journal</button></div>');
+ openCard('<div class="eyebrow">A record of your journey</div><h2>Traveler’s Journal</h2><p>Your story, completed quests, and Scripture discoveries, gathered in one place.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="stat">⭐ '+xp+' XP</div><div class="stat">📜 '+scrolls+'/3 scrolls</div><div class="stat">🏅 '+(Number(quizDone)+Number(mangerDone))+'/2 chapters</div></div><h3>Chapter entries</h3><p>'+(quizDone?'✓':'○')+' Chapter 1: The Shepherds’ Announcement · Luke 2:8–20 · 25 XP</p><p>'+(mangerDone?'✓':'○')+' Chapter 2: A Sign in the Manger · Luke 2:12–16 · 30 XP</p><h3>Scripture notes</h3>'+(notes.filter((n,i)=>gotScrolls[i]).map(n=>'<p>📜 '+n+'</p>').join('')||'<p>Collect the three glowing scrolls to add Scripture notes.</p>')+(q?'<h3>Path-exclusive side quest</h3><p><strong>'+q.questTitle+'</strong></p><p>'+(sideQuestDone?'✓ Completed':sideQuestStarted?(sideQuestStep===0?'In progress: find '+q.itemName+'.':q.returnText):'Not started: speak with '+q.npcName+'.')+'</p><p><strong>Reward:</strong> '+q.reward+' XP · '+q.keepsake+'</p>':'')+(keepsakes.length?'<p><strong>Keepsakes earned:</strong> '+keepsakes.join(', ')+'</p>':'')+'<div class="bottomrow"><button id="journalClose">Close journal</button></div>');
  $('journalClose').onclick=closeCard;
 }
 function interact(){
@@ -553,7 +475,6 @@ function updateInteractLabel(){
 }
 updateHud();
 if(!journeyPath)chooseJourneyPath();
-else if(!Object.keys(saved).length)openInnWelcome();
 // Lightweight collision rules keep the traveler on the path and out of solid scenery.
 const solidRects=[
  {x:0,z:-9.55,hx:4.65,hz:.28},
@@ -618,7 +539,7 @@ function animate(){
   camera.lookAt(player.position.x,1.2,player.position.z);
  renderer.render(scene,camera);
 }
-camera.position.set(0,5,15);updateHud();if(!journeyPath)chooseJourneyPath();animate();
+camera.position.set(0,5,15);if(equipped.includes('cloak'))tunicMat.color.set('#9e4141');updateHud();syncQuestItems();if(!journeyPath)chooseJourneyPath();else if(!Object.keys(saved3D).length)openInnWelcome();animate();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));});
 </script>
 </body>
