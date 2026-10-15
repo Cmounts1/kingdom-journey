@@ -188,7 +188,7 @@ function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';
 function openCard(content){interacting=true;$('card').innerHTML=content;$('overlay').style.display='flex'}
 function closeCard(){interacting=false;$('overlay').style.display='none'}
 function startQuiz(){
- openCard(`<div class="eyebrow">Shepherds' hillside · Luke 2:8–20</div><h2>Good news in Bethlehem</h2><p>The shepherd has heard a wondrous announcement. Answer this question to continue your journey.</p><p><strong>According to Luke 2, who brought the good news to the shepherds?</strong></p><div id="answers"></div><p id="feedback" aria-live="polite"></p><div class="bottomrow"><button class="secondary" id="leave">Not now</button></div>`);
+ const pathIntro=journeyPath==='helper'?'You notice the shepherd is eager to share the news, but he does not know who will listen. Learn what happened so you can carry the message onward.':journeyPath==='seeker'?'The shepherd describes a strange and wonderful event. Listen closely: the first clue is who appeared in the night.': 'The shepherd tells you that an extraordinary announcement interrupted an ordinary night on the hills. Listen and learn what happened.';\n openCard(`<div class="eyebrow">Shepherds' hillside · Luke 2:8–20</div><h2>Good news in Bethlehem</h2><p>${pathIntro}</p><p><strong>According to Luke 2, who brought the good news to the shepherds?</strong></p><div id="answers"></div><p id="feedback" aria-live="polite"></p><div class="bottomrow"><button class="secondary" id="leave">Not now</button></div>`);
  const answers=[['A choir of temple singers',false],['An angel of the Lord',true],['A Roman messenger',false]];
  const holder=$('answers');
  answers.forEach(([label,correct])=>{let b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(quizDone){$('feedback').textContent='You have already completed this question. Keep exploring!';return}if(correct){b.classList.add('correct');$('feedback').textContent='Correct! Luke 2:9 says an angel of the Lord stood by them. +25 XP';xp+=25;quizDone=true;questDone=true;save();updateHud();setTimeout(()=>{closeCard();toast('Quest complete! +25 XP');},1100)}else{b.classList.add('wrong');$('feedback').textContent='Not quite. Read Luke 2:9 and try again.'}};holder.appendChild(b)});
@@ -255,7 +255,7 @@ function chooseJourneyPath(){
   journeyPath=btn.dataset.journeyPath;save();
   const chosen=paths.find(p=>p.id===journeyPath);
   openCard('<div class="eyebrow">Your path is chosen</div><h2>'+chosen.icon+' '+chosen.name+'</h2><p>'+chosen.text+'</p><p><strong>First objective:</strong> '+chosen.goal+'</p><p>The inn door is open. Bethlehem is waiting beyond it.</p><div class="bottomrow"><button id="beginChosenPath">Begin the journey</button></div>');
-  $('beginChosenPath').onclick=closeCard;
+  $('beginChosenPath').onclick=()=>{closeCard();openInnWelcome();};
  });
 }
 function openInnWelcome(){
