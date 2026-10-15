@@ -35,13 +35,13 @@ canvas{display:block;width:100%;height:100%}
 <div id="hud">
   <div class="topbar">
     <div class="brand"><strong>✦ KINGDOM JOURNEY</strong><span>3D field test · The Inn at Bethlehem</span></div>
-    <div class="hint">Walk the path to the inn. Find the glowing doorway, then tap <b>Enter Inn</b>.</div>
+    <div class="hint">Explore the village. Walk close to a doorway, then tap <b>Enter Building</b>.</div>
   </div>
   <div id="message"><h2>Welcome, traveler</h2><p>The innkeeper’s lantern is lit. This 3D scene is a first step toward the larger journey.</p></div>
   <div id="controls">
     <div id="stickZone" aria-label="Movement joystick"><div id="stick"></div></div>
     <div class="rightControls">
-      <button class="controlButton" id="interact">Enter Inn</button>
+      <button class="controlButton" id="interact">Find Door</button>
       <button class="controlButton" id="reset">Reset View ↻</button>
     </div>
   </div>
@@ -322,11 +322,11 @@ const solidRects=[
  {x:-5,z:-4,hx:.65,hz:.65},{x:5,z:-4,hx:.65,hz:.65},
  {x:-5,z:-9,hx:.65,hz:.65},{x:5,z:-9,hx:.65,hz:.65},
  {x:-13,z:-2.15,hx:1.35,hz:.08},{x:-14.28,z:-1,hx:.08,hz:1.2},{x:-11.72,z:-1,hx:.08,hz:1.2},
- {x:-13.89,z:.14,hx:.46,hz:.08},{x:-12.11,z:.14,hx:.46,hz:.08},
+ {x:-13.89,z:.14,hx:.25,hz:.08},{x:-12.11,z:.14,hx:.25,hz:.08},
  {x:14,z:-4.02,hx:1.2,hz:.08},{x:12.86,z:-3,hx:.08,hz:1.05},{x:15.14,z:-3,hx:.08,hz:1.05},
- {x:13.21,z:-1.98,hx:.37,hz:.08},{x:14.79,z:-1.98,hx:.37,hz:.08},
+ {x:13.21,z:-1.98,hx:.20,hz:.08},{x:14.79,z:-1.98,hx:.20,hz:.08},
  {x:12,z:-26.46,hx:1.7,hz:.10},{x:10.37,z:-25,hx:.10,hz:1.55},{x:13.63,z:-25,hx:.10,hz:1.55},
- {x:10.86,z:-23.54,hx:.53,hz:.10},{x:13.14,z:-23.54,hx:.53,hz:.10}
+ {x:10.86,z:-23.54,hx:.25,hz:.10},{x:13.14,z:-23.54,hx:.25,hz:.10}
 ];
 const solidCircles=[[-10,-5,.9],[-12,-13,1], [10,-8,1],[12,-17,1],[-8,-20,.9],[7,3,.9],[14,1,1.0]];
 function blockedAt(x,z){
