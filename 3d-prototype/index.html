@@ -178,6 +178,7 @@ function tree(x,z,size=1){
 }
 [[-10,-5],[-12,-13],[10,-8],[12,-17],[-8,-20],[7,3],[14,1]].forEach((p,i)=>tree(p[0],p[1],.8+(i%3)*.18));
 // Small enterable cottages with door openings and simple furnishings.
+const cottageRoofs=[];
 function cottage(x,z,scale=1){
  const g=new THREE.Group();scene.add(g);g.position.set(x,0,z);g.scale.setScalar(scale);
  box(2.7,.14,2.4,materials.wood,0,.02,0,g);
