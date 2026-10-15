@@ -203,7 +203,7 @@ function startChapterTwo(){
  const answers=[['A child lying in a manger',true],['A royal crown in a palace',false],['A new star inside the temple',false]];const holder=$('chapterAnswers');
  answers.forEach(([label,correct])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(mangerDone){$('chapterFeedback').textContent='You have completed this chapter. Keep exploring Bethlehem!';return}if(correct){b.classList.add('correct');$('chapterFeedback').textContent='Correct! Luke 2:12 describes the sign. +30 XP';xp+=30;mangerDone=true;questDone=true;save();setTimeout(()=>{closeCard();openCard(`<div class="eyebrow">Chapter 2 complete</div><h2>Good news, shared with wonder</h2><p>The shepherds found Mary, Joseph, and the child, just as they had been told. Their journey turned a message into a meeting, and they left sharing what they had seen and heard.</p><p><strong>Scripture to read:</strong> Luke 2:12–16</p><p><strong>Reflection:</strong> What small sign might help you recognize hope in an unexpected place?</p><p><strong>Reward:</strong> 30 XP · Chapter 2 recorded in your journal.</p><div class="bottomrow"><button id="chapterDone">Continue exploring</button></div>`);$('chapterDone').onclick=closeCard;},900)}else{b.classList.add('wrong');$('chapterFeedback').textContent='Not quite. Read Luke 2:12 and try again.'}};holder.appendChild(b)});$('chapterLeave').onclick=closeCard;
 }
-function openInventory(){
+function openInventory(fromInn=false){
  const gear=[
   {id:'lantern',icon:'🏮',name:'Traveler’s Lantern',price:15,category:'Light',effect:'A warm golden glow follows you through the hills.',bonus:'Adds a soft golden glow around your character.',compare:'Light and visibility effect. It does not change movement speed or outfit color.'},
   {id:'cloak',icon:'🧥',name:'Festival Cloak',price:25,category:'Appearance',effect:'Your traveler’s robe turns rich red while equipped.',bonus:'Changes the robe color from blue to red.',compare:'Cosmetic upgrade. It does not affect movement speed or the lantern glow.'},
@@ -225,7 +225,7 @@ function openInventory(){
   }).join('');
   const comparison='<div style="border:1px solid #d4c9af;border-radius:14px;padding:13px;margin-top:12px;background:#fffaf0"><div class="eyebrow">Gear comparison</div><strong>'+selected.icon+' '+selected.name+'</strong><p style="font-size:13px;margin:6px 0">'+selected.bonus+'</p><p style="font-size:12px;margin:6px 0"><strong>Category:</strong> '+selected.category+'</p><p style="font-size:12px;margin:6px 0">'+selected.compare+'</p><div style="border-top:1px solid #e0d5c0;margin-top:9px;padding-top:9px;font-size:12px"><strong>Current active bonuses</strong><p style="margin:5px 0">'+(equipped.length?gear.filter(g=>equipped.includes(g.id)).map(g=>g.icon+' '+g.name+': '+g.bonus).join('<br>'):'No gear bonuses active. Equip an item to use its effect.')+'</p></div></div>';
   $('card').innerHTML='<div class="eyebrow">Your travel gear</div><h2>Inventory</h2><p>✨ XP balance: <strong>'+xp+'</strong> · Gear owned: <strong>'+inventory.length+'/'+inventorySlotCount+'</strong></p><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0">'+slots+'</div><p style="font-size:12px;color:#655b49">Tap Equip or Unequip to change active effects. Your gear and choices save with your journey.</p>'+items+comparison+'<div class="bottomrow"><button id="inventoryClose">Back to the road</button></div>';
-  $('inventoryClose').onclick=closeCard;
+  $('inventoryClose').onclick=()=>fromInn?openInnWelcome():closeCard();
   document.querySelectorAll('[data-toggle]').forEach(btn=>btn.onclick=()=>{
    const id=btn.dataset.toggle;
    if(!inventory.includes(id))return;
@@ -238,8 +238,9 @@ function openInventory(){
  render();
 }
 function openInnWelcome(){
- openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="ok">Begin the journey</button></div>`);
+ openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="innInventory">🎒 Check inventory</button><button id="ok">Begin the journey</button></div>`);
  $('ok').onclick=closeCard;
+ $('innInventory').onclick=()=>openInventory(true);
 }
 function interact(){
  if(interacting)return;
