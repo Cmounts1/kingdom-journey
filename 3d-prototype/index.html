@@ -359,7 +359,7 @@ const itemGlow=new THREE.PointLight('#f5cc72',.8,5);itemGlow.position.set(-11,1.
 
 // Controls: keyboard + accessible touch joystick.
 const keys=new Set();
-addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());});
+addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key===' '||e.key==='Enter'){interact();return}keys.add(e.key.toLowerCase());});
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 const zone=document.querySelector('#stickZone'),stick=document.querySelector('#stick');
 let pointer=null, joyX=0,joyY=0;
