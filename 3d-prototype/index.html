@@ -287,6 +287,56 @@ smoothSphere(.205,.12,.045,leatherLight,0,1.30,.435);
 box(.10,.08,.035,metalMat,0,1.25,.466,body);
 limb(.035,.035,.88,leatherLight,-.13,1.25,.02,-.20,-.36,body);
 
+// 3D-specific progress is stored separately, leaving the original 2D save untouched.
+const $=id=>document.getElementById(id);
+const overlay=$('overlay'),card=$('card'),toastEl=$('toast');
+const saveKey='kingdom-journey-3d-save';
+const saved3D=(()=>{try{return JSON.parse(localStorage.getItem(saveKey)||'{}')}catch(e){return {}}})();
+let xp=Number(saved3D.xp)||0,scrolls=Number(saved3D.scrolls)||0,quizDone=!!saved3D.quizDone,questDone=!!saved3D.questDone,mangerDone=!!saved3D.mangerDone;
+let journeyPath=['traveler','helper','seeker'].includes(saved3D.journeyPath)?saved3D.journeyPath:'';
+let sideQuestStarted=!!saved3D.sideQuestStarted,sideQuestStep=Number(saved3D.sideQuestStep)||0,sideQuestDone=!!saved3D.sideQuestDone;
+let keepsakes=Array.isArray(saved3D.keepsakes)?saved3D.keepsakes:[];
+let inventory=Array.isArray(saved3D.inventory)?saved3D.inventory:[];
+let equipped=Array.isArray(saved3D.equipped)?saved3D.equipped:[];
+let gotScrolls=Array.isArray(saved3D.gotScrolls)?[0,1,2].map(i=>!!saved3D.gotScrolls[i]):[false,false,false];
+if(Number.isFinite(saved3D.x)&&Number.isFinite(saved3D.z))player.position.set(saved3D.x,0,saved3D.z);
+const sideQuestDefs={
+ traveler:{npcName:'Mara the Wayfinder',x:worldObjects.sideNpcs.traveler.x,z:worldObjects.sideNpcs.traveler.z,itemName:'bronze road marker',itemX:worldObjects.sideItems.traveler.x,itemZ:worldObjects.sideItems.traveler.z,questTitle:'The Missing Road Marker',questText:'A caravan marker has gone missing on the hillside. Find it so travelers can follow the safe road into Bethlehem.',returnText:'Bring the bronze marker back to Mara.',reward:20,keepsake:'Wayfinder’s Compass',rewardText:'Mara gives you a little compass and 20 XP. It is a keepsake of the roads you have explored.'},
+ helper:{npcName:'Eli the Baker',x:worldObjects.sideNpcs.helper.x,z:worldObjects.sideNpcs.helper.z,itemName:'basket of fresh bread',itemX:worldObjects.sideItems.helper.x,itemZ:worldObjects.sideItems.helper.z,questTitle:'Bread for the Shepherds',questText:'Eli has prepared bread for a tired shepherd, but the basket was set down along the path. Find the basket and deliver it to the shepherd.',returnText:'Carry the bread basket to the shepherd on the hillside.',reward:25,keepsake:'Token of Kindness',rewardText:'The shepherd shares a carved token with you, thanking you for your kindness. You earn 25 XP.'},
+ seeker:{npcName:'Natan the Scroll Keeper',x:worldObjects.sideNpcs.seeker.x,z:worldObjects.sideNpcs.seeker.z,itemName:'torn parchment clue',itemX:worldObjects.sideItems.seeker.x,itemZ:worldObjects.sideItems.seeker.z,questTitle:'The Torn Prophecy',questText:'Natan found a fragment of old parchment, but another piece is missing. Search nearby and bring the torn clue back so he can study it.',returnText:'Return the parchment fragment to Natan.',reward:30,keepsake:'Sealed Clue',rewardText:'Natan seals the fragment in your journal as a clue for a future mystery.'}
+};
+function makeVillager(x,z,coat,hat=materials.hair,scale=1){
+ const g=new THREE.Group();scene.add(g);g.position.set(x,0,z);g.scale.setScalar(scale);
+ mesh(new THREE.CylinderGeometry(.27,.34,.82,10),coat,0,1.05,0,g);
+ limb(.09,.1,.16,skinMat,0,1.53,0,0,0,g);
+ smoothSphere(.22,.27,.21,skinMat,0,1.78,-.015,g);
+ smoothSphere(.22,.13,.21,hat,0,1.99,.01,g);
+ smoothSphere(.035,.045,.025,eyeMat,-.07,1.8,-.205,g);
+ smoothSphere(.035,.045,.025,eyeMat,.07,1.8,-.205,g);
+ limb(.095,.075,.36,coat,-.31,1.15,0,0,0,g);limb(.095,.075,.36,coat,.31,1.15,0,0,0,g);
+ limb(.11,.09,.43,materials.trousers,-.14,.38,0,0,0,g);limb(.11,.09,.43,materials.trousers,.14,.38,0,0,0,g);
+ smoothSphere(.12,.07,.17,materials.boot,-.14,.09,-.045,g);smoothSphere(.12,.07,.17,materials.boot,.14,.09,-.045,g);
+ return g;
+}
+const shepherdActor=makeVillager(worldObjects.shepherd.x,worldObjects.shepherd.z,materials.roofLight,materials.trim,1.05);
+const sideActors={
+ traveler:makeVillager(worldObjects.sideNpcs.traveler.x,worldObjects.sideNpcs.traveler.z,materials.cloth,materials.hair,.98),
+ helper:makeVillager(worldObjects.sideNpcs.helper.x,worldObjects.sideNpcs.helper.z,materials.roofLight,materials.trim,.98),
+ seeker:makeVillager(worldObjects.sideNpcs.seeker.x,worldObjects.sideNpcs.seeker.z,materials.leaf,materials.hair,1)
+};
+const scrollMeshes=worldObjects.scrolls.map((p,i)=>{
+ const g=new THREE.Group();scene.add(g);g.position.set(p.x,.65,p.z);
+ box(.28,.42,.07,materials.trim,0,0,0,g);box(.05,.44,.085,materials.roofLight,-.105,0,.015,g);box(.05,.44,.085,materials.roofLight,.105,0,.015,g);
+ g.rotation.y=.18+i*.3;g.visible=!gotScrolls[i];return g;
+});
+const questItemMeshes={
+ traveler:signBoard(worldObjects.sideItems.traveler.x,worldObjects.sideItems.traveler.z,materials.gold),
+ helper:box(.5,.35,.4,materials.wood,worldObjects.sideItems.helper.x,.3,worldObjects.sideItems.helper.z),
+ seeker:box(.32,.06,.25,materials.trim,worldObjects.sideItems.seeker.x,.08,worldObjects.sideItems.seeker.z)
+};
+questItemMeshes.traveler.position.y=.6;
+const itemGlow=new THREE.PointLight('#f5cc72',.8,5);itemGlow.position.set(worldObjects.sideItems.traveler.x,1.3,worldObjects.sideItems.traveler.z);scene.add(itemGlow);
+
 // Controls: keyboard + accessible touch joystick.
 const keys=new Set();
 addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key===' '||e.key==='Enter'){interact();return}keys.add(e.key.toLowerCase());});
