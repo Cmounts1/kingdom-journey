@@ -143,23 +143,73 @@ function cottage(x,z,scale=1){
 }
 cottage(-13,-1,.9);cottage(14,-3,.8);cottage(12,-25,1.15);
 
-// Player: simple friendly low-poly traveler.
+// Player: more natural storybook traveler with layered clothing and articulated limbs.
 const player=new THREE.Group();scene.add(player);player.position.set(0,0,7);
 const body=new THREE.Group();player.add(body);
-cylinder(.34,.43,.9,materials.cloth,0,1.05,0,7,body);
-sphere(.32,materials.skin,0,1.83,0,body,1);
-sphere(.34,materials.hair,0,2.0,-.08,body,1).scale.set(1,.65,1);
-const hat=cylinder(.37,.48,.12,materials.wood,0,2.15,0,7,body);
-const brim=cylinder(.5,.5,.07,materials.wood,0,2.1,0,9,body);
-box(.18,.55,.2,materials.trousers,-.18,.35,0,body);
-box(.18,.55,.2,materials.trousers,.18,.35,0,body);
-box(.23,.13,.34,materials.boot,-.18,.08,.05,body);
-box(.23,.13,.34,materials.boot,.18,.08,.05,body);
-const pack=box(.43,.52,.24,materials.wood,0,1.1,.35,body);
-box(.18,.12,.05,materials.gold,0,1.1,.49,body);
-// Face points forward toward -Z.
-sphere(.035,materials.darkWood,-.11,1.86,-.285,body);
-sphere(.035,materials.darkWood,.11,1.86,-.285,body);
+const skinMat=new THREE.MeshStandardMaterial({color:'#d7a078',roughness:.86});
+const skinShadow=new THREE.MeshStandardMaterial({color:'#b97d5b',roughness:.9});
+const tunicMat=new THREE.MeshStandardMaterial({color:'#5c7c70',roughness:.95});
+const tunicLight=new THREE.MeshStandardMaterial({color:'#78988a',roughness:.92});
+const leatherMat=new THREE.MeshStandardMaterial({color:'#69432d',roughness:.88});
+const leatherLight=new THREE.MeshStandardMaterial({color:'#8d5d3c',roughness:.84});
+const linenMat=new THREE.MeshStandardMaterial({color:'#d8c8a5',roughness:1});
+const hairMat=new THREE.MeshStandardMaterial({color:'#4b3025',roughness:1});
+const eyeMat=new THREE.MeshStandardMaterial({color:'#30251f',roughness:.7});
+const metalMat=new THREE.MeshStandardMaterial({color:'#c5a15d',metalness:.35,roughness:.5});
+function smoothSphere(rx,ry,rz,material,x,y,z,parent=body){
+ const m=mesh(new THREE.SphereGeometry(1,16,12),material,x,y,z,parent);
+ m.scale.set(rx,ry,rz);return m;
+}
+function limb(radiusTop,radiusBottom,length,material,x,y,z,rotX=0,rotZ=0,parent=body){
+ const m=mesh(new THREE.CylinderGeometry(radiusTop,radiusBottom,length,10),material,x,y,z,parent);
+ m.rotation.x=rotX;m.rotation.z=rotZ;return m;
+}
+// Tunic, collar and belt.
+mesh(new THREE.CylinderGeometry(.31,.39,.88,12),tunicMat,0,1.08,0,body);
+smoothSphere(.34,.20,.23,tunicMat,0,1.43,0);
+limb(.115,.13,.17,linenMat,0,1.51,-.015,0,0,body);
+mesh(new THREE.CylinderGeometry(.345,.345,.085,12),leatherMat,0,.82,0,body);
+box(.13,.105,.045,metalMat,0,.82,-.355,body);
+// Neck, face, ears and hair.
+limb(.105,.11,.17,skinMat,0,1.61,0,0,0,body);
+smoothSphere(.255,.315,.235,skinMat,0,1.91,-.015);
+smoothSphere(.23,.17,.225,hairMat,0,2.12,.005);
+smoothSphere(.105,.15,.20,hairMat,-.19,1.98,.015);
+smoothSphere(.105,.15,.20,hairMat,.19,1.98,.015);
+smoothSphere(.045,.07,.035,skinMat,-.255,1.91,0);
+smoothSphere(.045,.07,.035,skinMat,.255,1.91,0);
+// Face points toward -Z.
+smoothSphere(.045,.052,.035,eyeMat,-.09,1.95,-.224);
+smoothSphere(.045,.052,.035,eyeMat,.09,1.95,-.224);
+smoothSphere(.055,.07,.065,skinShadow,0,1.87,-.245);
+smoothSphere(.10,.045,.035,skinShadow,0,1.79,-.219);
+// Soft travel cap with a stitched-looking band.
+smoothSphere(.265,.13,.25,leatherMat,0,2.19,.005);
+const capBand=mesh(new THREE.TorusGeometry(.245,.025,6,16),leatherLight,0,2.16,0,body);
+capBand.rotation.x=Math.PI/2;
+// Articulated arms, sleeves and hands.
+const leftArm=new THREE.Group();body.add(leftArm);leftArm.position.set(-.34,1.34,0);
+limb(.12,.095,.47,tunicLight,0,-.22,0,0,0,leftArm);
+limb(.085,.07,.31,skinMat,0,-.57,-.005,0,0,leftArm);
+smoothSphere(.075,.09,.07,skinMat,0,-.75,-.015,leftArm);
+const rightArm=new THREE.Group();body.add(rightArm);rightArm.position.set(.34,1.34,0);
+limb(.12,.095,.47,tunicLight,0,-.22,0,0,0,rightArm);
+limb(.085,.07,.31,skinMat,0,-.57,-.005,0,0,rightArm);
+smoothSphere(.075,.09,.07,skinMat,0,-.75,-.015,rightArm);
+// Separate trouser legs and rounded boots.
+const leftLeg=new THREE.Group();body.add(leftLeg);leftLeg.position.set(-.18,.63,0);
+limb(.13,.105,.38,materials.trousers,0,-.15,0,0,0,leftLeg);
+limb(.105,.085,.28,materials.trousers,0,-.46,-.005,0,0,leftLeg);
+smoothSphere(.12,.075,.19,materials.boot,0,-.64,-.065,leftLeg);
+const rightLeg=new THREE.Group();body.add(rightLeg);rightLeg.position.set(.18,.63,0);
+limb(.13,.105,.38,materials.trousers,0,-.15,0,0,0,rightLeg);
+limb(.105,.085,.28,materials.trousers,0,-.46,-.005,0,0,rightLeg);
+smoothSphere(.12,.075,.19,materials.boot,0,-.64,-.065,rightLeg);
+// Leather satchel with flap, brass clasp and shoulder strap.
+box(.40,.48,.23,leatherMat,0,1.12,.31,body);
+smoothSphere(.205,.12,.045,leatherLight,0,1.30,.435);
+box(.10,.08,.035,metalMat,0,1.25,.466,body);
+limb(.035,.035,.88,leatherLight,-.13,1.25,.02,-.20,-.36,body);
 
 // Controls: keyboard + accessible touch joystick.
 const keys=new Set();
@@ -242,8 +292,17 @@ function animate(){
   if(!blockedAt(player.position.x,nextZ))player.position.z=nextZ;
   const angle=Math.atan2(-x,-z);
   player.rotation.y=THREE.MathUtils.damp(player.rotation.y,angle,12,dt);
-  body.position.y=Math.abs(Math.sin(clock.elapsedTime*10))*.045;
- }else{body.position.y=THREE.MathUtils.damp(body.position.y,0,8,dt)}
+   const gait=Math.sin(clock.elapsedTime*10);
+   body.position.y=Math.abs(gait)*.025;
+   leftLeg.rotation.x=gait*.48;rightLeg.rotation.x=-gait*.48;
+   leftArm.rotation.x=-gait*.34;rightArm.rotation.x=gait*.34;
+  }else{
+   body.position.y=THREE.MathUtils.damp(body.position.y,0,8,dt);
+   leftLeg.rotation.x=THREE.MathUtils.damp(leftLeg.rotation.x,0,8,dt);
+   rightLeg.rotation.x=THREE.MathUtils.damp(rightLeg.rotation.x,0,8,dt);
+   leftArm.rotation.x=THREE.MathUtils.damp(leftArm.rotation.x,0,8,dt);
+   rightArm.rotation.x=THREE.MathUtils.damp(rightArm.rotation.x,0,8,dt);
+  }
  // Keep the action label honest: entry only activates near the doorway.
  interactButton.textContent=nearDoor()?(entered?'Leave Inn':'Enter Inn'):'Walk to Inn';
   // Fixed-angle follow camera: it tracks the traveler but never pans or rotates while walking.
