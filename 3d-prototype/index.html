@@ -219,6 +219,34 @@ const worldObjects={
  }
 };
 
+function signBoard(x,z,labelColor=materials.gold){
+ const g=new THREE.Group();scene.add(g);g.position.set(x,0,z);
+ cylinder(.055,.07,1.15,materials.wood,0,.58,0,7,g);
+ box(.9,.48,.12,materials.darkWood,0,1.25,0,g);
+ box(.72,.28,.025,labelColor,0,1.25,.075,g);
+ return g;
+}
+// Bethlehem market stall and colorful wares.
+const marketGroup=new THREE.Group();scene.add(marketGroup);marketGroup.position.set(worldObjects.market.x,0,worldObjects.market.z);
+box(3.4,.14,1.25,materials.wood,0,1.12,0,marketGroup);
+for(const x of [-1.45,1.45])cylinder(.07,.09,2.3,materials.wood,x,1.15,0,8,marketGroup);
+const marketCanopy=mesh(new THREE.ConeGeometry(2.35,.7,4),materials.cloth,0,2.4,0,marketGroup);marketCanopy.rotation.y=Math.PI/4;marketCanopy.scale.set(1.15,.7,.7);
+box(.65,.5,.5,materials.wood,-.85,.38,-.05,marketGroup);box(.65,.5,.5,materials.wood,.75,.38,-.05,marketGroup);
+for(let i=0;i<3;i++)sphere(.14,[materials.gold,materials.leaf2,materials.roofLight][i],-.65+i*.6,1.37,-.1,marketGroup,1);
+signBoard(worldObjects.market.x,worldObjects.market.z+1.65,materials.trim);
+// Bethlehem stable and manger beneath the guiding star.
+const stable=new THREE.Group();scene.add(stable);stable.position.set(worldObjects.manger.x,0,worldObjects.manger.z);
+box(5,.16,3,materials.wood,0,.06,0,stable);
+box(5,2.7,.18,materials.wallShade,0,1.35,-1.42,stable);
+box(.18,2.7,3,materials.wallShade,-2.4,1.35,0,stable);
+box(.18,2.7,3,materials.wallShade,2.4,1.35,0,stable);
+const stableRoof3D=mesh(new THREE.ConeGeometry(3.4,1.8,4),materials.roof,0,3.25,0,stable);stableRoof3D.rotation.y=Math.PI/4;stableRoof3D.scale.z=.8;
+box(1.5,.24,.75,materials.wood,0,.55,-.35,stable);
+box(1.28,.16,.58,materials.trim,0,.73,-.35,stable);
+const mangerStar=mesh(new THREE.OctahedronGeometry(.38),new THREE.MeshBasicMaterial({color:'#ffe78a'}),0,4.4,0,stable);
+const starLight=new THREE.PointLight('#ffdf84',1.5,9);starLight.position.set(0,4.2,0);stable.add(starLight);
+
+
 // Bethlehem landmarks: trading stall, stable, star and paths.
 const worldDecor=new THREE.Group();scene.add(worldDecor);
 box(3,.16,1.8,materials.wood,-7,.12,2.5,worldDecor);
