@@ -71,8 +71,20 @@ canvas{display:block;width:100%;height:100%}
 </div>
 <div id="overlay"><div id="card"></div></div>
 <div id="toast" class="toast"></div>
+<div id="bootError" role="alert" style="display:none;position:fixed;z-index:99;inset:12px 12px auto;padding:16px;border:2px solid #a64b35;border-radius:14px;background:#fff3d7;color:#263b3b;font:14px/1.45 system-ui,sans-serif;box-shadow:0 8px 28px #0005"><strong>Kingdom Journey could not start.</strong><p id="bootErrorText" style="margin:8px 0"></p><p style="margin:0">Please refresh once. If this message remains, the details above will help us fix the exact issue.</p></div>
+<script>
+(function(){
+ function showBootError(message){
+  var box=document.getElementById('bootError'),detail=document.getElementById('bootErrorText');
+  if(box&&detail){detail.textContent=String(message||'Unknown startup error');box.style.display='block';}
+ }
+ window.addEventListener('error',function(e){if(e.message)showBootError(e.message+(e.filename?' ('+e.filename.split('/').pop()+':'+e.lineno+')':''));});
+ window.addEventListener('unhandledrejection',function(e){showBootError(e.reason&&e.reason.message?e.reason.message:e.reason||'A required 3D resource failed to load');});
+ window.setTimeout(function(){if(!window.__kingdom3dReady)showBootError('The 3D engine did not finish loading. This may be a browser or network issue with the Three.js module.');},9000);
+})();
+</script>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
+import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#b7d8c7');
