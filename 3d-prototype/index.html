@@ -298,11 +298,8 @@ function interact(){
    // Hide the opaque roof indoors so the camera can see the furnished room.
    if(b.kind==='inn')roof1.visible=false;
    cameraOffset.set(0,2.65,-2.45);
-  message.querySelector('h2').textContent=b.name;
-  message.querySelector('p').textContent=b.kind==='inn'
-   ?'Warm lantern light fills the common room. A counter, benches and a little hearth wait inside. Tap Leave Building to return to the village.'
-   :'A quiet cottage interior offers a cot, a table and shelter from the road. Tap Leave Building to step back outside.';
-  message.style.display='block';
+  // Keep the scene unobstructed while exploring indoors.
+  message.style.display='none';
  }else{
   message.querySelector('h2').textContent='Find a doorway';
   message.querySelector('p').textContent='Walk close to the inn or one of the village cottages. The action button will open the nearest building.';
