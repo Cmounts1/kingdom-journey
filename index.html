@@ -56,6 +56,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#182b35;col
   <div class="actions">
     <button id="run" class="action">🏃 WALK</button>
     <button id="interact" class="action primary">TALK / INTERACT</button>
+    <button id="inventory" class="action">🎒 INVENTORY</button>
     <button id="journal" class="action">📖 JOURNAL</button>
   </div>
 </div>
@@ -200,6 +201,17 @@ function startChapterTwo(){
  const answers=[['A child lying in a manger',true],['A royal crown in a palace',false],['A new star inside the temple',false]];const holder=$('chapterAnswers');
  answers.forEach(([label,correct])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(mangerDone){$('chapterFeedback').textContent='You have completed this chapter. Keep exploring Bethlehem!';return}if(correct){b.classList.add('correct');$('chapterFeedback').textContent='Correct! Luke 2:12 describes the sign. +30 XP';xp+=30;mangerDone=true;questDone=true;save();setTimeout(()=>{closeCard();openCard(`<div class="eyebrow">Chapter 2 complete</div><h2>Good news, shared with wonder</h2><p>The shepherds found Mary, Joseph, and the child, just as they had been told. Their journey turned a message into a meeting, and they left sharing what they had seen and heard.</p><p><strong>Scripture to read:</strong> Luke 2:12–16</p><p><strong>Reflection:</strong> What small sign might help you recognize hope in an unexpected place?</p><p><strong>Reward:</strong> 30 XP · Chapter 2 recorded in your journal.</p><div class="bottomrow"><button id="chapterDone">Continue exploring</button></div>`);$('chapterDone').onclick=closeCard;},900)}else{b.classList.add('wrong');$('chapterFeedback').textContent='Not quite. Read Luke 2:12 and try again.'}};holder.appendChild(b)});$('chapterLeave').onclick=closeCard;
 }
+function openInventory(){
+ const gear=[
+  {id:'lantern',icon:'🏮',name:'Traveler’s Lantern',effect:'A warm golden glow follows you through the hills.',status:'Glow active'},
+  {id:'cloak',icon:'🧥',name:'Festival Cloak',effect:'Your traveler’s robe is dyed a rich red.',status:'Cloak equipped'},
+  {id:'boots',icon:'🥾',name:'Swift Traveler Boots',effect:'Your walking and running speed is increased by 20%.',status:'Speed boost active'}
+ ];
+ const owned=gear.filter(g=>inventory.includes(g.id));
+ const contents=owned.length?owned.map(g=>`<div style="display:flex;gap:12px;align-items:flex-start;border:1px solid #d4c9af;border-radius:14px;padding:13px;margin:9px 0;background:#fffaf0"><div style="font-size:30px;line-height:1.2">${g.icon}</div><div style="flex:1"><strong style="font-size:16px">${g.name}</strong><p style="margin:5px 0;font-size:13px">${g.effect}</p><span style="display:inline-block;border-radius:999px;background:#e3eedb;color:#315b38;padding:5px 9px;font-size:11px;font-weight:800">${g.status}</span></div></div>`).join(''):'<div style="border:1px dashed #b9aa8d;border-radius:14px;padding:18px;text-align:center;background:#fffaf0"><div style="font-size:34px">🎒</div><strong>Your pack is empty</strong><p>Visit the Bethlehem Market to buy travel gear with XP. Purchased items appear here and their effects activate automatically.</p></div>';
+ openCard(`<div class="eyebrow">Your travel gear</div><h2>Inventory</h2><p>✨ XP balance: <strong>${xp}</strong> · Gear collected: <strong>${owned.length}/3</strong></p>${contents}<p style="font-size:12px;color:#655b49">Your gear and progress are saved in this browser on this device.</p><div class="bottomrow"><button id="inventoryClose">Back to the road</button></div>`);
+ $('inventoryClose').onclick=closeCard;
+}
 function openInnWelcome(){
  openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="ok">Begin the journey</button></div>`);
  $('ok').onclick=closeCard;
@@ -233,6 +245,7 @@ function interact(){
 $('interact').addEventListener('click',interact);
 $('run').addEventListener('click',()=>{running=!running;$('run').textContent=running?'🏃 RUNNING':'🏃 WALK';toast(running?'Running enabled':'Walking enabled')});
 
+$('inventory').addEventListener('click',openInventory);
 $('journal').addEventListener('click',()=>{
 
   openCard(`<div class="eyebrow">Your travel journal</div><h2>Kingdom Journey</h2><p><strong>Quest:</strong> ${mangerDone?'Chapter 2 complete':quizDone&&scrolls>=3?'Chapter 2: Visit the manger':questDone?'Shepherd quest complete':'The shepherds’ announcement'}</p><p><strong>Scripture:</strong> ${mangerDone||quizDone&&scrolls>=3?'Luke 2:12–16':'Luke 2:8–20'}</p><p><strong>Reflection:</strong> ${mangerDone?'Where might you recognize hope in an unexpected place?':'What might the shepherds have felt when they heard the announcement? What good news would you want to share?'}</p><p><strong>Progress:</strong> ${xp} XP · ${scrolls}/3 scrolls · Level ${1+Math.floor(xp/50)}</p><p><strong>Market inventory:</strong> ${inventory.length?inventory.map(id=>({lantern:'🏮 Lantern',cloak:'🧥 Festival Cloak',boots:'🥾 Swift Boots'}[id]||id)).join(', '):'No items yet'}</p><p style="font-size:12px;color:#655b49">Progress saves in this browser on this device.</p><div class="bottomrow"><button id="ok">Close journal</button><button id="resetSave" class="secondary">Reset progress</button></div>`);
