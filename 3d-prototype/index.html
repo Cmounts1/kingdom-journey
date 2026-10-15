@@ -248,26 +248,6 @@ const mangerStar=mesh(new THREE.OctahedronGeometry(.38),new THREE.MeshBasicMater
 const starLight=new THREE.PointLight('#ffdf84',1.5,9);starLight.position.set(0,4.2,0);stable.add(starLight);
 
 
-// Bethlehem landmarks: trading stall, stable, star and paths.
-const worldDecor=new THREE.Group();scene.add(worldDecor);
-box(3,.16,1.8,materials.wood,-7,.12,2.5,worldDecor);
-for(const x of [-8.25,-7,-5.75])cylinder(.06,.07,2.15,materials.wood,x,1.08,2.5,7,worldDecor);
-box(3.2,.14,1.9,materials.roofLight,-7,2.18,2.5,worldDecor);
-for(const x of [-8,-7,-6]){sphere(.18,materials.gold,x,.48,2.15,worldDecor,1);box(.35,.32,.32,materials.leaf,x,.42,2.65,worldDecor)}
-function signBoard(x,z){
- const g=new THREE.Group();worldDecor.add(g);g.position.set(x,0,z);
- cylinder(.055,.07,1.2,materials.wood,0,.6,0,7,g);box(.9,.48,.12,materials.darkWood,0,1.35,0,g);box(.72,.28,.025,materials.trim,0,1.35,.075,g);return g;
-}
-box(4,.18,3,materials.wood,0,.08,-21.5,worldDecor);
-box(4,2.4,.18,materials.wallShade,0,1.2,-23,worldDecor);
-box(.18,2.4,3,materials.wallShade,-2,1.2,-21.5,worldDecor);
-box(.18,2.4,3,materials.wallShade,2,1.2,-21.5,worldDecor);
-const stableRoof=mesh(new THREE.ConeGeometry(3.1,1.8,4),materials.roof,0,3,-21.5,worldDecor);stableRoof.rotation.y=Math.PI/4;stableRoof.scale.z=.8;
-box(1.35,.45,.55,materials.wood,0,.42,-21.1,worldDecor);box(1.12,.12,.42,materials.trim,0,.68,-21.1,worldDecor);
-const mangerStarShape=new THREE.Shape();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?.22:.5,xx=Math.cos(a)*r,yy=Math.sin(a)*r;if(i===0)mangerStarShape.moveTo(xx,yy);else mangerStarShape.lineTo(xx,yy)}mangerStarShape.closePath();
-const mangerStar=mesh(new THREE.ShapeGeometry(mangerStarShape),new THREE.MeshBasicMaterial({color:'#ffe58a',side:THREE.DoubleSide}),0,5,-21.2,worldDecor);
-const mangerLight=new THREE.PointLight('#ffe58a',1.7,8);mangerLight.position.set(0,4.7,-20.5);worldDecor.add(mangerLight);
-for(let i=0;i<9;i++){const stone=box(.55,.07,.7,materials.stone,-.9-i*.8,.05,-5-i*1.1,worldDecor);stone.rotation.y=.12;const stone2=box(.55,.07,.7,materials.stone,1+i*.7,.05,-12-i*.8,worldDecor);stone2.rotation.y=.12}
 // Player: more natural storybook traveler with layered clothing and articulated limbs.
 const player=new THREE.Group();scene.add(player);player.position.set(0,0,7);
 const body=new THREE.Group();player.add(body);
