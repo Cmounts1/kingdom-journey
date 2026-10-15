@@ -71,17 +71,18 @@ const keys={up:false,down:false,left:false,right:false};
 const player={x:0,y:0,speed:3.2,dir:0};
 const world={w:1000,h:720};
 const inn={x:350,y:430};
-let xp=0,scrolls=0,quizDone=false,questDone=false,interacting=false,running=false;
+let xp=0,scrolls=0,quizDone=false,questDone=false,mangerDone=false,interacting=false,running=false;
 const saved=(()=>{try{return JSON.parse(localStorage.getItem('kj-free-save')||'{}')}catch(e){return {}}})();
-xp=Number(saved.xp)||0;scrolls=Number(saved.scrolls)||0;quizDone=!!saved.quizDone;questDone=!!saved.questDone;
+xp=Number(saved.xp)||0;scrolls=Number(saved.scrolls)||0;quizDone=!!saved.quizDone;questDone=!!saved.questDone;mangerDone=!!saved.mangerDone;
 player.x=Number.isFinite(saved.x)?saved.x:inn.x+28;player.y=Number.isFinite(saved.y)?saved.y:inn.y+10;
 const shepherd={x:635,y:310};
+const manger={x:760,y:220};
 const scrollItems=[{x:260,y:330,got:false},{x:800,y:430,got:false},{x:430,y:570,got:false}];
 scrollItems.forEach((s,i)=>s.got=!!(saved.got&&saved.got[i]));
-function save(){try{localStorage.setItem('kj-free-save',JSON.stringify({xp,scrolls,quizDone,questDone,x:player.x,y:player.y,got:scrollItems.map(s=>s.got)}))}catch(e){} updateHud()}
+function save(){try{localStorage.setItem('kj-free-save',JSON.stringify({xp,scrolls,quizDone,questDone,mangerDone,x:player.x,y:player.y,got:scrollItems.map(s=>s.got)}))}catch(e){} updateHud()}
 function updateHud(){
  $('xp').textContent=xp;$('level').textContent=1+Math.floor(xp/50);$('scrolls').textContent=scrolls;
- $('questText').textContent=questDone?'Quest complete! Explore and collect the remaining scrolls.':quizDone?'Collect the three Scripture scrolls around the hillside.':'Find the shepherd and learn about the announcement.';
+ $('questText').textContent=mangerDone?'Chapter 2 complete! Keep exploring Bethlehem.':quizDone&&scrolls>=3?'Chapter 2: Follow the star to the manger.':quizDone?'Collect the three Scripture scrolls around the hillside.':'Find the shepherd and learn about the announcement.';
 }
 function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0)}
 addEventListener('resize',resize);resize();
@@ -97,6 +98,7 @@ function drawMiniMap(){
  mapCtx.moveTo(8,mh-10);mapCtx.lineTo(35,mh-32);mapCtx.lineTo(63,mh-26);mapCtx.lineTo(84,42);mapCtx.lineTo(112,28);mapCtx.stroke();
  mapCtx.fillStyle='#986e50';mapCtx.fillRect(14,19,9,7);mapCtx.fillRect(30,24,8,7);mapCtx.fillRect(126,18,9,7);
  scrollItems.forEach(it=>{if(!it.got){mapCtx.fillStyle='#f2d06c';mapCtx.beginPath();mapCtx.arc(it.x/world.w*mw,it.y/world.h*mh,3.5,0,Math.PI*2);mapCtx.fill()}});
+ mapCtx.fillStyle=(quizDone&&scrolls>=3)?'#ffe78a':'#b6b6a1';mapCtx.beginPath();mapCtx.arc(manger.x/world.w*mw,manger.y/world.h*mh,4,0,Math.PI*2);mapCtx.fill();
  mapCtx.fillStyle='#f5f0d8';mapCtx.beginPath();mapCtx.arc(shepherd.x/world.w*mw,shepherd.y/world.h*mh,4,0,Math.PI*2);mapCtx.fill();
  mapCtx.fillStyle='#254b70';mapCtx.beginPath();mapCtx.arc(player.x/world.w*mw,player.y/world.h*mh,4.5,0,Math.PI*2);mapCtx.fill();
  mapCtx.strokeStyle='rgba(255,255,255,.5)';mapCtx.lineWidth=1;mapCtx.strokeRect(.5,.5,mw-1,mh-1);
@@ -125,6 +127,14 @@ function draw(){
   ctx.fillStyle='#e9d8b4';ctx.fillRect(q.x-29*z,q.y-20*z,12*z,13*z);ctx.fillRect(q.x+17*z,q.y-20*z,12*z,13*z);
   ctx.fillStyle='#fff3c6';ctx.font=`${Math.max(10,12*z)}px system-ui`;ctx.textAlign='center';ctx.fillText('THE INN',q.x,q.y-66*z)
  }
+ // Bethlehem stable and manger, destination of Chapter 2
+ {let q=point(manger.x,manger.y),z=s;
+  ctx.fillStyle='#8b6649';ctx.fillRect(q.x-34*z,q.y-25*z,6*z,48*z);ctx.fillRect(q.x+28*z,q.y-25*z,6*z,48*z);
+  poly([[q.x-43*z,q.y-25*z],[q.x,q.y-54*z],[q.x+43*z,q.y-25*z]],'#76513a');
+  ctx.fillStyle='#d8c39b';ctx.fillRect(q.x-27*z,q.y-24*z,54*z,7*z);ctx.fillStyle='#e4d2ad';ctx.fillRect(q.x-13*z,q.y-10*z,26*z,7*z);ctx.fillStyle='#9b7048';ctx.fillRect(q.x-17*z,q.y-7*z,34*z,9*z);drawEllipse(q.x,q.y-13*z,7*z,4*z,'#f8edce');
+  if(quizDone&&scrolls>=3){ctx.fillStyle='#ffe78a';ctx.beginPath();for(let k=0;k<10;k++){let a=-Math.PI/2+k*Math.PI/5,r=(k%2?7:15)*z,xx=q.x+Math.cos(a)*r,yy=q.y-70*z+Math.sin(a)*r;if(k===0)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy)}ctx.closePath();ctx.fill();ctx.fillStyle='#fff3c6';ctx.font=`${Math.max(10,12*z)}px system-ui`;ctx.textAlign='center';ctx.fillText('FOLLOW THE STAR',q.x,q.y-91*z)}
+  ctx.fillStyle='#fff3c6';ctx.font=`${Math.max(10,12*z)}px system-ui`;ctx.textAlign='center';ctx.fillText('THE MANGER',q.x,q.y-60*z)
+ }
  // sheep
  [[560,350],[585,375],[710,340],[740,385],[680,410]].forEach(([x,y],i)=>{let q=point(x,y),z=s*(.65+(i%3)*.08);drawEllipse(q.x,q.y+3*z,12*z,8*z,'#e9e5d6');drawEllipse(q.x+8*z,q.y,5*z,5*z,'#494b43');drawEllipse(q.x-4*z,q.y-3*z,5*z,4*z,'#fffaf0')});
  // scrolls
@@ -140,7 +150,8 @@ function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function nearest(){
  const choices=[
   {kind:'shepherd',x:shepherd.x,y:shepherd.y,dist:distance(player,shepherd)},
-  {kind:'inn',x:inn.x,y:inn.y,dist:distance(player,inn)}
+  {kind:'inn',x:inn.x,y:inn.y,dist:distance(player,inn)},
+  {kind:'manger',x:manger.x,y:manger.y,dist:distance(player,manger)}
  ];
  scrollItems.forEach((item,index)=>{if(!item.got)choices.push({kind:'scroll',x:item.x,y:item.y,dist:distance(player,item),index})});
  return choices.sort((a,b)=>a.dist-b.dist)[0];
@@ -148,7 +159,7 @@ function nearest(){
 function setHint(){
  const n=nearest();
  if(n&&n.dist<65){
-  $('hint').textContent=n.kind==='shepherd'?'Tap TALK / INTERACT to speak with the shepherd.':n.kind==='inn'?'Tap TALK / INTERACT to enter the inn and hear a welcome.':'Tap TALK / INTERACT to collect a Scripture scroll.';
+  $('hint').textContent=n.kind==='shepherd'?'Tap TALK / INTERACT to speak with the shepherd.':n.kind==='inn'?'Tap TALK / INTERACT to enter the inn and hear a welcome.':n.kind==='manger'?(quizDone&&scrolls>=3?'Chapter 2 awaits: tap to visit the manger.':'Finish the shepherd quest and collect all 3 scrolls to unlock the manger.'):'Tap TALK / INTERACT to collect a Scripture scroll.';
  }else $('hint').textContent='Explore the hillside. Use the arrows to move.';
 }
 function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').style.display='none',1700)}
@@ -161,6 +172,11 @@ function startQuiz(){
  answers.forEach(([label,correct])=>{let b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(quizDone){$('feedback').textContent='You have already completed this question. Keep exploring!';return}if(correct){b.classList.add('correct');$('feedback').textContent='Correct! Luke 2:9 says an angel of the Lord stood by them. +25 XP';xp+=25;quizDone=true;questDone=true;save();updateHud();setTimeout(()=>{closeCard();toast('Quest complete! +25 XP');},1100)}else{b.classList.add('wrong');$('feedback').textContent='Not quite. Read Luke 2:9 and try again.'}};holder.appendChild(b)});
  $('leave').onclick=closeCard;
 }
+function startChapterTwo(){
+ openCard(`<div class="eyebrow">Chapter 2 · Luke 2:12–16</div><h2>A Sign in the Manger</h2><p>You follow the star to Bethlehem. Inside the humble stable, Mary and Joseph care for the newborn child. The shepherds' announcement has led you to the sign they were given.</p><p><strong>Question:</strong> What sign did the angel tell the shepherds to look for?</p><div id="chapterAnswers"></div><p id="chapterFeedback" aria-live="polite"></p><div class="bottomrow"><button class="secondary" id="chapterLeave">Read later</button></div>`);
+ const answers=[['A child lying in a manger',true],['A royal crown in a palace',false],['A new star inside the temple',false]];const holder=$('chapterAnswers');
+ answers.forEach(([label,correct])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(mangerDone){$('chapterFeedback').textContent='You have completed this chapter. Keep exploring Bethlehem!';return}if(correct){b.classList.add('correct');$('chapterFeedback').textContent='Correct! Luke 2:12 describes the sign. +30 XP';xp+=30;mangerDone=true;questDone=true;save();setTimeout(()=>{closeCard();openCard(`<div class="eyebrow">Chapter 2 complete</div><h2>Good news, shared with wonder</h2><p>The shepherds found Mary, Joseph, and the child, just as they had been told. Their journey turned a message into a meeting, and they left sharing what they had seen and heard.</p><p><strong>Scripture to read:</strong> Luke 2:12–16</p><p><strong>Reflection:</strong> What small sign might help you recognize hope in an unexpected place?</p><p><strong>Reward:</strong> 30 XP · Chapter 2 recorded in your journal.</p><div class="bottomrow"><button id="chapterDone">Continue exploring</button></div>`);$('chapterDone').onclick=closeCard;},900)}else{b.classList.add('wrong');$('chapterFeedback').textContent='Not quite. Read Luke 2:12 and try again.'}};holder.appendChild(b)});$('chapterLeave').onclick=closeCard;
+}
 function openInnWelcome(){
  openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="ok">Begin the journey</button></div>`);
  $('ok').onclick=closeCard;
@@ -170,6 +186,11 @@ function interact(){
  const n=nearest();
  if(!n||n.dist>70){toast('Move closer to a person or scroll.');return;}
  if(n.kind==='inn'){openInnWelcome();return;}
+ if(n.kind==='manger'){
+  if(!quizDone||scrolls<3){toast('Complete the shepherd quest and collect all 3 scrolls first.');return;}
+  if(mangerDone){openCard(`<div class="eyebrow">Chapter 2 · Luke 2:12–16</div><h2>The Manger in Bethlehem</h2><p>You have visited the place the shepherds were told to seek. The story reminds us that hope can arrive in humble surroundings.</p><p><strong>Reflection:</strong> Where might you find hope in an unexpected place?</p><div class="bottomrow"><button id="ok">Continue exploring</button></div>`);$('ok').onclick=closeCard;return;}
+  startChapterTwo();return;
+ }
  if(n.kind==='shepherd'){
   if(quizDone){
    openCard(`<div class="eyebrow">Luke 2:8–20</div><h2>Peace and good news</h2><p>The shepherds went to Bethlehem and shared what they had been told. The story invites us to respond with wonder, gratitude, and hope.</p><p><strong>Scripture to read:</strong> Luke 2:8–20</p><div class="bottomrow"><button id="ok">Continue exploring</button></div>`);
@@ -181,7 +202,7 @@ function interact(){
  if(!item||item.got)return;
  item.got=true;scrolls++;xp+=5;save();toast('Scripture scroll collected! +5 XP');
  if(scrolls>=3){
-  openCard(`<div class="eyebrow">Journal updated</div><h2>Three scrolls collected!</h2><p>You have gathered every scroll scattered across the hillside. Take a moment to read Luke 2:8–20 and reflect on the story.</p><div class="bottomrow"><button id="ok">Continue</button></div>`);
+  openCard(`<div class="eyebrow">Chapter 1 complete</div><h2>Three scrolls collected!</h2><p>You have gathered every scroll scattered across the hillside. Your next destination is the manger in Bethlehem.</p><p><strong>Chapter 2 unlocked:</strong> Follow the star and discover the sign described in Luke 2:12–16.</p><div class="bottomrow"><button id="ok">Continue exploring</button></div>`);
   $('ok').onclick=closeCard;
  }
 }
@@ -190,7 +211,7 @@ $('run').addEventListener('click',()=>{running=!running;$('run').textContent=run
 
 $('journal').addEventListener('click',()=>{
 
-  openCard(`<div class="eyebrow">Your travel journal</div><h2>Kingdom Journey</h2><p><strong>Quest:</strong> ${questDone?'Complete':'The shepherds’ announcement'}</p><p><strong>Scripture:</strong> Luke 2:8–20</p><p><strong>Reflection:</strong> What might the shepherds have felt when they heard the announcement? What good news would you want to share?</p><p><strong>Progress:</strong> ${xp} XP · ${scrolls}/3 scrolls · Level ${1+Math.floor(xp/50)}</p><p style="font-size:12px;color:#655b49">Progress saves in this browser on this device.</p><div class="bottomrow"><button id="ok">Close journal</button><button id="resetSave" class="secondary">Reset progress</button></div>`);
+  openCard(`<div class="eyebrow">Your travel journal</div><h2>Kingdom Journey</h2><p><strong>Quest:</strong> ${mangerDone?'Chapter 2 complete':quizDone&&scrolls>=3?'Chapter 2: Visit the manger':questDone?'Shepherd quest complete':'The shepherds’ announcement'}</p><p><strong>Scripture:</strong> ${mangerDone||quizDone&&scrolls>=3?'Luke 2:12–16':'Luke 2:8–20'}</p><p><strong>Reflection:</strong> ${mangerDone?'Where might you recognize hope in an unexpected place?':'What might the shepherds have felt when they heard the announcement? What good news would you want to share?'}</p><p><strong>Progress:</strong> ${xp} XP · ${scrolls}/3 scrolls · Level ${1+Math.floor(xp/50)}</p><p style="font-size:12px;color:#655b49">Progress saves in this browser on this device.</p><div class="bottomrow"><button id="ok">Close journal</button><button id="resetSave" class="secondary">Reset progress</button></div>`);
 
   $('ok').onclick=closeCard;
 
