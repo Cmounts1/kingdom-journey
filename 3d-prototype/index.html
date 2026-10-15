@@ -120,7 +120,8 @@ function sphere(r,material,x,y,z,parent=scene,detail=0){return mesh(new THREE.Ic
 
 const ground=box(220,.35,220,materials.grass,0,-.24,0);ground.receiveShadow=true;
 // Soft rolling hills, made from low-poly mounds.
-for(let i=0;i<22;i++){const x=(i%6-2.5)*25+(Math.random()-.5)*7,z=-30-Math.floor(i/6)*24;const h=2+Math.random()*3;const hill=sphere(1, i%3?materials.grass2:materials.grass,x,h*.35,z,scene,1);hill.scale.set(7+Math.random()*3,h,5+Math.random()*3);hill.castShadow=false;}
+// Keep the rolling green mounds small and well outside the travel corridor behind the inn.
+for(let i=0;i<22;i++){let x=(i%6-2.5)*25+(Math.random()-.5)*7;const z=-30-Math.floor(i/6)*24;const h=1.2+Math.random()*.8;if(Math.abs(x)<20)x=Math.sign(x||1)*20;const hill=sphere(1,i%3?materials.grass2:materials.grass,x,h*.35,z,scene,1);hill.scale.set(1.9+Math.random()*.6,h,1.4+Math.random()*.6);hill.castShadow=false;}
 // A winding sandy approach.
 const path=box(4,.08,30,materials.path,0,.0,-2);path.rotation.y=-.12;
 for(let i=0;i<16;i++){const s=box(.38,.09,.55,materials.stone,Math.sin(i*.8)*.65,.06,12-i*2.0);s.rotation.y=(i%2-.5)*.2;}
@@ -178,7 +179,7 @@ for(const [x,z] of [[-5,-4],[5,-4],[-5,-9],[5,-9]]){
   cylinder(.43,.43,.09,materials.darkWood,x,.65,z,9);
 }
 for(let i=0;i<18;i++){
- const x=(i%2?1:-1)*(9.2+Math.random()*4),z=-4-Math.random()*28;
+ const x=(i%2?1:-1)*(14+Math.random()*4),z=-4-Math.random()*28;
  const stem=cylinder(.04,.06,.6,materials.leaf,x,.3,z,5);
  sphere(.2, i%2?materials.leaf:materials.leaf2,x,.7,z,scene,1);
 }
