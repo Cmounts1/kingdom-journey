@@ -224,9 +224,8 @@ function blockedAt(x,z){
  return false;
 }
 const clock=new THREE.Clock();
-const cameraTarget=new THREE.Vector3();
 const desiredCamera=new THREE.Vector3();
-const forward=new THREE.Vector3();
+const cameraOffset=new THREE.Vector3(0,5.2,9.5);
 function animate(){
  requestAnimationFrame(animate);
  const dt=Math.min(clock.getDelta(),.04);
@@ -247,12 +246,10 @@ function animate(){
  }else{body.position.y=THREE.MathUtils.damp(body.position.y,0,8,dt)}
  // Keep the action label honest: entry only activates near the doorway.
  interactButton.textContent=nearDoor()?(entered?'Leave Inn':'Enter Inn'):'Walk to Inn';
- // Camera stays behind the traveler and eases into position.
- forward.set(Math.sin(player.rotation.y),0,Math.cos(player.rotation.y));
- desiredCamera.set(player.position.x+forward.x*7,player.position.y+4.2,player.position.z+forward.z*7);
- camera.position.lerp(desiredCamera,1-Math.exp(-4.5*dt));
- cameraTarget.set(player.position.x,1.2,player.position.z-1.0);
- camera.lookAt(cameraTarget);
+  // Fixed-angle follow camera: it tracks the traveler but never pans or rotates while walking.
+  desiredCamera.copy(player.position).add(cameraOffset);
+  camera.position.copy(desiredCamera);
+  camera.lookAt(player.position.x,1.2,player.position.z);
  renderer.render(scene,camera);
 }
 camera.position.set(0,5,15);animate();
