@@ -598,14 +598,14 @@ const solidRects=[
  {x:-2.85,z:-4.5,hx:1.65,hz:.28},{x:2.85,z:-4.5,hx:1.65,hz:.28},
  {x:-5,z:-4,hx:.65,hz:.65},{x:5,z:-4,hx:.65,hz:.65},
  {x:-5,z:-9,hx:.65,hz:.65},{x:5,z:-9,hx:.65,hz:.65},
- {x:-13,z:-2.15,hx:1.35,hz:.08},{x:-14.28,z:-1,hx:.08,hz:1.2},{x:-11.72,z:-1,hx:.08,hz:1.2},
- {x:-13.89,z:.14,hx:.25,hz:.08},{x:-12.11,z:.14,hx:.25,hz:.08},
- {x:14,z:-4.02,hx:1.2,hz:.08},{x:12.86,z:-3,hx:.08,hz:1.05},{x:15.14,z:-3,hx:.08,hz:1.05},
- {x:13.21,z:-1.98,hx:.20,hz:.08},{x:14.79,z:-1.98,hx:.20,hz:.08},
- {x:12,z:-26.46,hx:1.7,hz:.10},{x:10.37,z:-25,hx:.10,hz:1.55},{x:13.63,z:-25,hx:.10,hz:1.55},
- {x:10.86,z:-23.54,hx:.25,hz:.10},{x:13.14,z:-23.54,hx:.25,hz:.10}
+  {x:-23,z:-6.15,hx:1.35,hz:.08},{x:-24.28,z:-5,hx:.08,hz:1.2},{x:-21.72,z:-5,hx:.08,hz:1.2},
+  {x:-23.89,z:-3.86,hx:.25,hz:.08},{x:-22.11,z:-3.86,hx:.25,hz:.08},
+  {x:25,z:-10.02,hx:1.2,hz:.08},{x:23.86,z:-9,hx:.08,hz:1.05},{x:26.14,z:-9,hx:.08,hz:1.05},
+  {x:24.21,z:-7.98,hx:.20,hz:.08},{x:25.79,z:-7.98,hx:.20,hz:.08},
+  {x:22,z:-44.46,hx:1.7,hz:.10},{x:20.37,z:-43,hx:.10,hz:1.55},{x:23.63,z:-43,hx:.10,hz:1.55},
+  {x:20.86,z:-41.54,hx:.25,hz:.10},{x:23.14,z:-41.54,hx:.25,hz:.10}
 ];
-const solidCircles=[[-10,-5,.9],[-12,-13,1], [10,-8,1],[12,-17,1],[-8,-20,.9],[7,3,.9],[14,1,1.0]];
+const solidCircles=[[-19,-9,.9],[-23,-25,1],[20,-15,1],[23,-32,1],[-16,-38,.9],[13,6,.9],[28,3,1.0],[-28,-20,1],[31,-43,1]];
 function blockedAt(x,z){
  for(const r of solidRects){
   if(Math.abs(x-r.x)<r.hx+.28 && Math.abs(z-r.z)<r.hz+.25)return true;
@@ -628,8 +628,8 @@ function animate(){
  if(len>.12&&overlay.style.display!=='flex'){
   x/=Math.max(1,len);z/=Math.max(1,len);
   const speed=4.1*(equipped.includes('boots')?1.2:1)*(window.running?1.75:1);
-  const nextX=THREE.MathUtils.clamp(player.position.x+x*speed*dt,-18,18);
-  const nextZ=THREE.MathUtils.clamp(player.position.z+z*speed*dt,-24,16);
+  const nextX=THREE.MathUtils.clamp(player.position.x+x*speed*dt,-42,42);
+  const nextZ=THREE.MathUtils.clamp(player.position.z+z*speed*dt,-62,24);
   // Resolve axes separately so the player can slide along walls instead of sticking.
   if(!blockedAt(nextX,player.position.z))player.position.x=nextX;
   if(!blockedAt(player.position.x,nextZ))player.position.z=nextZ;
