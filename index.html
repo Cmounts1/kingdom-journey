@@ -70,10 +70,11 @@ let W=0,H=0,dpr=1, last=0, toastTimer=0;
 const keys={up:false,down:false,left:false,right:false};
 const player={x:0,y:0,speed:3.2,dir:0};
 const world={w:1000,h:720};
+const inn={x:350,y:430};
 let xp=0,scrolls=0,quizDone=false,questDone=false,interacting=false,running=false;
 const saved=(()=>{try{return JSON.parse(localStorage.getItem('kj-free-save')||'{}')}catch(e){return {}}})();
 xp=Number(saved.xp)||0;scrolls=Number(saved.scrolls)||0;quizDone=!!saved.quizDone;questDone=!!saved.questDone;
-player.x=Number.isFinite(saved.x)?saved.x:500;player.y=Number.isFinite(saved.y)?saved.y:460;
+player.x=Number.isFinite(saved.x)?saved.x:inn.x+28;player.y=Number.isFinite(saved.y)?saved.y:inn.y+10;
 const shepherd={x:635,y:310};
 const scrollItems=[{x:260,y:330,got:false},{x:800,y:430,got:false},{x:430,y:570,got:false}];
 scrollItems.forEach((s,i)=>s.got=!!(saved.got&&saved.got[i]));
@@ -115,9 +116,16 @@ function draw(){
  for(let i=0;i<32;i++){let x=(i*137+70)%world.w,y=(i*89+95)%world.h,q=point(x,y);if(q.x<-30||q.x>W+30||q.y<-30||q.y>H+30)continue;drawEllipse(q.x,q.y,7*s,4*s,i%2?'#667d55':'#7d8756');drawEllipse(q.x-2*s,q.y-2*s,3*s,2*s,'#98a16a')}
  // small Bethlehem-style houses far away
  const houses=[[150,280],[205,295],[850,275],[890,300]];
- houses.forEach(([x,y],i)=>{let q=point(x,y);let z= s*(i%2?0.8:1);ctx.fillStyle='#d9c5a0';ctx.fillRect(q.x-19*z,q.y-24*z,38*z,27*z);poly([[q.x-24*z,q.y-24*z],[q.x,q.y-44*z],[q.x+24*z,q.y-24*z]],'#986e50');ctx.fillStyle='#6c5a48';ctx.fillRect(q.x-4*z,q.y-13*z,8*z,16*// the inn where each journey begins
-{let q=point(inn.x,inn.y),z=s;ctx.fillStyle=’#c8b18a’;ctx.fillRect(q.x-38z,q.y-31z,76z,43z);poly([[q.x-46z,q.y-31z],[q.x,q.y-59z],[q.x+46z,q.y-31z]],’#76513a’);ctx.fillStyle=’#4c382b’;ctx.fillRect(q.x-10z,q.y-20z,20z,32z);ctx.fillStyle=’#e9d8b4’;ctx.fillRect(q.x-29z,q.y-20z,12z,13z);ctx.fillRect(q.x+17z,q.y-20z,12z,13z);ctx.fillStyle=’#fff3c6’;ctx.font=${Math.max(10,12*z)}px system-ui;ctx.textAlign=‘center’;ctx.fillText(‘THE INN’,q.x,q.y-66*z)}
-// sheep
+ houses.forEach(([x,y],i)=>{let q=point(x,y);let z=s*(i%2?0.8:1);ctx.fillStyle='#d9c5a0';ctx.fillRect(q.x-19*z,q.y-24*z,38*z,27*z);poly([[q.x-24*z,q.y-24*z],[q.x,q.y-44*z],[q.x+24*z,q.y-24*z]],'#986e50');ctx.fillStyle='#6c5a48';ctx.fillRect(q.x-4*z,q.y-13*z,8*z,16*z)});
+ // the inn where each journey begins
+ {let q=point(inn.x,inn.y),z=s;
+  ctx.fillStyle='#c8b18a';ctx.fillRect(q.x-38*z,q.y-31*z,76*z,43*z);
+  poly([[q.x-46*z,q.y-31*z],[q.x,q.y-59*z],[q.x+46*z,q.y-31*z]],'#76513a');
+  ctx.fillStyle='#4c382b';ctx.fillRect(q.x-10*z,q.y-20*z,20*z,32*z);
+  ctx.fillStyle='#e9d8b4';ctx.fillRect(q.x-29*z,q.y-20*z,12*z,13*z);ctx.fillRect(q.x+17*z,q.y-20*z,12*z,13*z);
+  ctx.fillStyle='#fff3c6';ctx.font=`${Math.max(10,12*z)}px system-ui`;ctx.textAlign='center';ctx.fillText('THE INN',q.x,q.y-66*z)
+ }
+ // sheep
  [[560,350],[585,375],[710,340],[740,385],[680,410]].forEach(([x,y],i)=>{let q=point(x,y),z=s*(.65+(i%3)*.08);drawEllipse(q.x,q.y+3*z,12*z,8*z,'#e9e5d6');drawEllipse(q.x+8*z,q.y,5*z,5*z,'#494b43');drawEllipse(q.x-4*z,q.y-3*z,5*z,4*z,'#fffaf0')});
  // scrolls
  scrollItems.forEach((it,i)=>{if(it.got)return;let q=point(it.x,it.y);let bob=Math.sin(performance.now()/280+i)*3;ctx.save();ctx.translate(q.x,q.y-17*s+bob);ctx.rotate(Math.sin(performance.now()/500+i)*.08);ctx.fillStyle='#f4d47a';ctx.fillRect(-7*s,-10*s,14*s,20*s);ctx.fillStyle='#8d6534';ctx.fillRect(-7*s,-10*s,3*s,20*s);ctx.fillRect(4*s,-10*s,3*s,20*s);ctx.restore();ctx.fillStyle='#fff3c6';ctx.font=`${Math.max(10,12*s)}px system-ui`;ctx.textAlign='center';ctx.fillText('📜',q.x,q.y-24*s)});
@@ -129,8 +137,20 @@ function draw(){
  const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.72);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(13,30,31,.28)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
 }
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
-function nearest(){let choices=[{kind:'shepherd',x:shepherd.x,y:shepherd.y,dist:distance(player,shoherds)},{kind:‘inn’,x:inn.x,y:inn.y,dist:distance(player,inn)}];scrollItems.forEach((s,i)=>{if(!s.got)choices.push({kind:'scroll',x:s.x,y:s.y,dist:distance(player,s),index:i})});return choices.sort((a,b)=>a.dist-b.dist)[0]}
-function setHint(){let n=nearest();if(n&&n.dist<65){$('hint').textContent=n.kind==='shepherd'?'Tap TALK / INTERACT to speak with the shepherd.':'Tap TALK / INTERACT to collect a Scripture scroll.'}else $('hint').textContent='Explore the hillside. Use the arrows to move.'}
+function nearest(){
+ const choices=[
+  {kind:'shepherd',x:shepherd.x,y:shepherd.y,dist:distance(player,shepherd)},
+  {kind:'inn',x:inn.x,y:inn.y,dist:distance(player,inn)}
+ ];
+ scrollItems.forEach((item,index)=>{if(!item.got)choices.push({kind:'scroll',x:item.x,y:item.y,dist:distance(player,item),index})});
+ return choices.sort((a,b)=>a.dist-b.dist)[0];
+}
+function setHint(){
+ const n=nearest();
+ if(n&&n.dist<65){
+  $('hint').textContent=n.kind==='shepherd'?'Tap TALK / INTERACT to speak with the shepherd.':n.kind==='inn'?'Tap TALK / INTERACT to enter the inn and hear a welcome.':'Tap TALK / INTERACT to collect a Scripture scroll.';
+ }else $('hint').textContent='Explore the hillside. Use the arrows to move.';
+}
 function toast(msg){$('toast').textContent=msg;$('toast').style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').style.display='none',1700)}
 function openCard(content){interacting=true;$('card').innerHTML=content;$('overlay').style.display='flex'}
 function closeCard(){interacting=false;$('overlay').style.display='none'}
@@ -141,11 +161,29 @@ function startQuiz(){
  answers.forEach(([label,correct])=>{let b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(quizDone){$('feedback').textContent='You have already completed this question. Keep exploring!';return}if(correct){b.classList.add('correct');$('feedback').textContent='Correct! Luke 2:9 says an angel of the Lord stood by them. +25 XP';xp+=25;quizDone=true;questDone=true;save();updateHud();setTimeout(()=>{closeCard();toast('Quest complete! +25 XP');},1100)}else{b.classList.add('wrong');$('feedback').textContent='Not quite. Read Luke 2:9 and try again.'}};holder.appendChild(b)});
  $('leave').onclick=closeCard;
 }
+function openInnWelcome(){
+ openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="ok">Begin the journey</button></div>`);
+ $('ok').onclick=closeCard;
+}
 function interact(){
- if(interacting)return;let n=nearest();if(!n||n.dist>70){toast('Move closer to a person or scroll.');
-if(n.kind===‘inn’){openCard(<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="ok">Begin the journey</button></div>);$('ok').onclick=closeCard}else
-if(n.kind==='shepherd'){if(quizDone){openCard(`<div class="eyebrow">Luke 2:8–20</div><h2>Peace and good news</h2><p>The shepherds went to Bethlehem and shared what they had been told. The story invites us to respond with wonder, gratitude, and hope.</p><p><strong>Scripture to read:</strong> Luke 2:8–20</p><div class="bottomrow"><button id="ok">Continue exploring</button></div>`);$('ok').onclick=closeCard}else startQuiz()}
- else {scrollItems[n.index].got=true;scrolls++;xp+=5;save();toast('Scripture scroll collected! +5 XP');if(scrolls===3){openCard(`<div class="eyebrow">Journal updated</div><h2>Three scrolls collected!</h2><p>You have gathered every scroll scattered across the hillside. Take a moment to read Luke 2:8–20 and reflect on the story.</p><div class="bottomrow"><button id="ok">Continue</button></div>`);$('ok').onclick=closeCard}}
+ if(interacting)return;
+ const n=nearest();
+ if(!n||n.dist>70){toast('Move closer to a person or scroll.');return;}
+ if(n.kind==='inn'){openInnWelcome();return;}
+ if(n.kind==='shepherd'){
+  if(quizDone){
+   openCard(`<div class="eyebrow">Luke 2:8–20</div><h2>Peace and good news</h2><p>The shepherds went to Bethlehem and shared what they had been told. The story invites us to respond with wonder, gratitude, and hope.</p><p><strong>Scripture to read:</strong> Luke 2:8–20</p><div class="bottomrow"><button id="ok">Continue exploring</button></div>`);
+   $('ok').onclick=closeCard;
+  }else startQuiz();
+  return;
+ }
+ const item=scrollItems[n.index];
+ if(!item||item.got)return;
+ item.got=true;scrolls++;xp+=5;save();toast('Scripture scroll collected! +5 XP');
+ if(scrolls>=3){
+  openCard(`<div class="eyebrow">Journal updated</div><h2>Three scrolls collected!</h2><p>You have gathered every scroll scattered across the hillside. Take a moment to read Luke 2:8–20 and reflect on the story.</p><div class="bottomrow"><button id="ok">Continue</button></div>`);
+  $('ok').onclick=closeCard;
+ }
 }
 $('interact').addEventListener('click',interact);
 $('run').addEventListener('click',()=>{running=!running;$('run').textContent=running?'🏃 RUNNING':'🏃 WALK';toast(running?'Running enabled':'Walking enabled')});
@@ -164,7 +202,9 @@ document.querySelectorAll('.ctrl').forEach(btn=>{const dir=btn.dataset.dir;const
 addEventListener('keydown',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=true;if(['ArrowDown','s','S'].includes(e.key))keys.down=true;if(['ArrowLeft','a','A'].includes(e.key))keys.left=true;if(['ArrowRight','d','D'].includes(e.key))keys.right=true;if(e.key===' '||e.key==='Enter'){e.preventDefault();interact()}});
 addEventListener('keyup',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=false;if(['ArrowDown','s','S'].includes(e.key))keys.down=false;if(['ArrowLeft','a','A'].includes(e.key))keys.left=false;if(['ArrowRight','d','D'].includes(e.key))keys.right=false});
 function frame(t){let dt=Math.min((t-last)/16.67||1,2);last=t;if(!interacting){let dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);if(dx||dy){let mag=Math.hypot(dx,dy);const pace=player.speed*(running?1.75:1);player.x=clamp(player.x+dx/mag*pace*dt,35,world.w-35);player.y=clamp(player.y+dy/mag*pace*dt,55,world.h-25);player.dir=Math.atan2(dy,dx);if(Math.random()<.035)save()}}draw();drawMiniMap();setHint();requestAnimationFrame(frame)}
-updateHud();requestAnimationFrame(frame);
+updateHud();
+if(!Object.keys(saved).length){openInnWelcome();}
+requestAnimationFrame(frame);
 })();
 </script>
 </body>
