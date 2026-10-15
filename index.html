@@ -56,6 +56,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#182b35;col
   <div class="actions">
     <button id="run" class="action">🏃 WALK</button>
     <button id="interact" class="action primary">TALK / INTERACT</button>
+    <button id="inventory" class="action">🎒 INVENTORY</button>
     <button id="journal" class="action">📖 JOURNAL</button>
   </div>
 </div>
@@ -79,9 +80,11 @@ const shepherd={x:635,y:310};
 const manger={x:760,y:220};
 const market={x:250,y:455};
 let inventory=Array.isArray(saved.inventory)?saved.inventory:[];
+let equipped=Array.isArray(saved.equipped)?saved.equipped.slice():inventory.slice();
+const inventorySlotCount=8;
 const scrollItems=[{x:260,y:330,got:false},{x:800,y:430,got:false},{x:430,y:570,got:false}];
 scrollItems.forEach((s,i)=>s.got=!!(saved.got&&saved.got[i]));
-function save(){try{localStorage.setItem('kj-free-save',JSON.stringify({xp,scrolls,quizDone,questDone,mangerDone,inventory,x:player.x,y:player.y,got:scrollItems.map(s=>s.got)}))}catch(e){} updateHud()}
+function save(){try{localStorage.setItem('kj-free-save',JSON.stringify({xp,scrolls,quizDone,questDone,mangerDone,inventory,equipped,x:player.x,y:player.y,got:scrollItems.map(s=>s.got)}))}catch(e){} updateHud()}
 function updateHud(){
  $('xp').textContent=xp;$('level').textContent=1+Math.floor(xp/50);$('scrolls').textContent=scrolls;
  $('questText').textContent=mangerDone?'Chapter 2 complete! Keep exploring Bethlehem.':quizDone&&scrolls>=3?'Chapter 2: Follow the star to the manger.':quizDone?'Collect the three Scripture scrolls around the hillside.':'Find the shepherd and learn about the announcement.';
@@ -153,7 +156,7 @@ function draw(){
  // shepherd
  {let q=point(shepherd.x,shepherd.y),z=s;drawEllipse(q.x,q.y+9*z,13*z,5*z,'rgba(32,45,33,.22)');ctx.fillStyle='#8e5d40';ctx.fillRect(q.x-8*z,q.y-20*z,16*z,27*z);drawEllipse(q.x,q.y-25*z,8*z,8*z,'#9d704e');ctx.fillStyle='#e4d5b5';ctx.beginPath();ctx.arc(q.x,q.y-28*z,10*z,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle='#4e4439';ctx.fillRect(q.x+8*z,q.y-10*z,3*z,23*z);ctx.fillStyle='#fff3c6';ctx.font=`${Math.max(11,13*z)}px system-ui`;ctx.textAlign='center';ctx.fillText('SHEPHERD',q.x,q.y-43*z)}
  // player, centered-ish in camera view
- {let q=point(player.x,player.y),z=s;if(inventory.includes('lantern')){const glow=ctx.createRadialGradient(q.x,q.y-10*z,2*z,q.x,q.y-10*z,58*z);glow.addColorStop(0,'rgba(255,222,120,.32)');glow.addColorStop(1,'rgba(255,222,120,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(q.x,q.y-10*z,58*z,0,Math.PI*2);ctx.fill()}drawEllipse(q.x,q.y+10*z,13*z,5*z,'rgba(32,45,33,.28)');ctx.fillStyle=inventory.includes('cloak')?'#9e4141':'#284b68';ctx.fillRect(q.x-8*z,q.y-20*z,16*z,27*z);drawEllipse(q.x,q.y-25*z,8*z,8*z,'#d3a17c');ctx.fillStyle='#d8c79e';ctx.beginPath();ctx.arc(q.x,q.y-28*z,10*z,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle='#e8c76b';ctx.beginPath();ctx.moveTo(q.x,q.y-18*z);ctx.lineTo(q.x+14*z,q.y-12*z);ctx.lineTo(q.x,q.y-6*z);ctx.fill()}
+ {let q=point(player.x,player.y),z=s;if(equipped.includes('lantern')){const glow=ctx.createRadialGradient(q.x,q.y-10*z,2*z,q.x,q.y-10*z,58*z);glow.addColorStop(0,'rgba(255,222,120,.32)');glow.addColorStop(1,'rgba(255,222,120,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(q.x,q.y-10*z,58*z,0,Math.PI*2);ctx.fill()}drawEllipse(q.x,q.y+10*z,13*z,5*z,'rgba(32,45,33,.28)');ctx.fillStyle=equipped.includes('cloak')?'#9e4141':'#284b68';ctx.fillRect(q.x-8*z,q.y-20*z,16*z,27*z);drawEllipse(q.x,q.y-25*z,8*z,8*z,'#d3a17c');ctx.fillStyle='#d8c79e';ctx.beginPath();ctx.arc(q.x,q.y-28*z,10*z,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle='#e8c76b';ctx.beginPath();ctx.moveTo(q.x,q.y-18*z);ctx.lineTo(q.x+14*z,q.y-12*z);ctx.lineTo(q.x,q.y-6*z);ctx.fill()}
  // subtle vignette
  const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.72);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(13,30,31,.28)');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
 }
@@ -192,7 +195,7 @@ function openMarket(){
  ];
  const rows=goods.map(g=>{const owned=inventory.includes(g.id);return `<div style="border:1px solid #d4c9af;border-radius:14px;padding:12px;margin:9px 0;background:#fffaf0"><div style="font-size:18px">${g.icon} <strong>${g.name}</strong></div><p style="margin:5px 0;font-size:13px">${g.desc}</p><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><strong>✨ ${g.price} XP</strong><button data-buy="${g.id}" ${owned||xp<g.price?'disabled':''} style="border:0;border-radius:10px;padding:10px 12px;background:${owned?'#ded3bc':xp<g.price?'#ded3bc':'#203a42'};color:${owned||xp<g.price?'#716958':'white'};font-weight:700">${owned?'Owned':xp<g.price?'Need more XP':'Buy item'}</button></div></div>`}).join('');
  openCard(`<div class="eyebrow">Bethlehem · Trading post</div><h2>Welcome to the Market</h2><p>Spend your earned XP on useful travel gear. Purchases are saved with your journey.</p><p><strong>Your balance: ✨ <span id="marketBalance">${xp}</span> XP</strong></p>${rows}<p id="marketMessage" aria-live="polite"></p><div class="bottomrow"><button id="marketClose">Back to the road</button></div>`);
- document.querySelectorAll('[data-buy]').forEach(btn=>btn.onclick=()=>{const g=goods.find(item=>item.id===btn.dataset.buy);if(!g||inventory.includes(g.id))return;if(xp<g.price){$('marketMessage').textContent='You need more XP for that item.';return}xp-=g.price;inventory.push(g.id);save();openMarket();$('marketMessage').textContent=`Purchased ${g.name}! Enjoy your new gear.`});
+ document.querySelectorAll('[data-buy]').forEach(btn=>btn.onclick=()=>{const g=goods.find(item=>item.id===btn.dataset.buy);if(!g||inventory.includes(g.id))return;if(xp<g.price){$('marketMessage').textContent='You need more XP for that item.';return}xp-=g.price;inventory.push(g.id);equipped.push(g.id);save();openMarket();$('marketMessage').textContent=`Purchased ${g.name}! Enjoy your new gear.`});
  $('marketClose').onclick=closeCard;
 }
 function startChapterTwo(){
@@ -200,9 +203,44 @@ function startChapterTwo(){
  const answers=[['A child lying in a manger',true],['A royal crown in a palace',false],['A new star inside the temple',false]];const holder=$('chapterAnswers');
  answers.forEach(([label,correct])=>{const b=document.createElement('button');b.className='choice';b.textContent=label;b.onclick=()=>{if(mangerDone){$('chapterFeedback').textContent='You have completed this chapter. Keep exploring Bethlehem!';return}if(correct){b.classList.add('correct');$('chapterFeedback').textContent='Correct! Luke 2:12 describes the sign. +30 XP';xp+=30;mangerDone=true;questDone=true;save();setTimeout(()=>{closeCard();openCard(`<div class="eyebrow">Chapter 2 complete</div><h2>Good news, shared with wonder</h2><p>The shepherds found Mary, Joseph, and the child, just as they had been told. Their journey turned a message into a meeting, and they left sharing what they had seen and heard.</p><p><strong>Scripture to read:</strong> Luke 2:12–16</p><p><strong>Reflection:</strong> What small sign might help you recognize hope in an unexpected place?</p><p><strong>Reward:</strong> 30 XP · Chapter 2 recorded in your journal.</p><div class="bottomrow"><button id="chapterDone">Continue exploring</button></div>`);$('chapterDone').onclick=closeCard;},900)}else{b.classList.add('wrong');$('chapterFeedback').textContent='Not quite. Read Luke 2:12 and try again.'}};holder.appendChild(b)});$('chapterLeave').onclick=closeCard;
 }
+function openInventory(fromInn=false){
+ const gear=[
+  {id:'lantern',icon:'🏮',name:'Traveler’s Lantern',price:15,category:'Light',effect:'A warm golden glow follows you through the hills.',bonus:'Adds a soft golden glow around your character.',compare:'Light and visibility effect. It does not change movement speed or outfit color.'},
+  {id:'cloak',icon:'🧥',name:'Festival Cloak',price:25,category:'Appearance',effect:'Your traveler’s robe turns rich red while equipped.',bonus:'Changes the robe color from blue to red.',compare:'Cosmetic upgrade. It does not affect movement speed or the lantern glow.'},
+  {id:'boots',icon:'🥾',name:'Swift Traveler Boots',price:30,category:'Movement',effect:'Move 20% faster while equipped.',bonus:'Increases walking and running speed by 20%.',compare:'Movement upgrade. It does not change robe color or add a glow.'}
+ ];
+ let compareId=gear.find(g=>inventory.includes(g.id))?.id||'lantern';
+ function render(){
+  const owned=gear.filter(g=>inventory.includes(g.id));
+  const selected=gear.find(g=>g.id===compareId)||gear[0];
+  const slots=Array.from({length:inventorySlotCount},(_,i)=>{
+   const id=inventory[i];
+   if(!id)return '<div style="border:1px dashed #b9aa8d;border-radius:12px;padding:12px;text-align:center;min-height:86px;background:rgba(255,250,240,.55)"><div style="font-size:24px;opacity:.55">＋</div><div style="font-size:11px;font-weight:800">OPEN SLOT</div><div style="font-size:10px;color:#80745e">Future discovery</div></div>';
+   const g=gear.find(item=>item.id===id);
+   return '<div style="border:1px solid #cbbd9f;border-radius:12px;padding:12px;text-align:center;min-height:86px;background:#fffaf0"><div style="font-size:25px">'+(g?g.icon:'🎁')+'</div><div style="font-size:11px;font-weight:800">'+(g?g.name:id)+'</div><div style="font-size:10px;color:#6e6758">'+(equipped.includes(id)?'Equipped':'Stored')+'</div></div>';
+  }).join('');
+  const items=gear.map(g=>{
+   const ownedItem=inventory.includes(g.id),active=equipped.includes(g.id);
+   return '<div style="border:1px solid #d4c9af;border-radius:14px;padding:12px;margin:9px 0;background:#fffaf0"><div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:28px">'+g.icon+'</div><div style="flex:1"><strong>'+g.name+'</strong><p style="font-size:12px;margin:5px 0">'+g.effect+'</p><div style="font-size:11px;font-weight:800;color:'+(active?'#315b38':'#776b57')+'">'+(ownedItem?(active?'✓ EQUIPPED':'IN PACK'):'NOT OWNED')+'</div></div></div><div style="display:flex;gap:7px;margin-top:10px"><button data-compare="'+g.id+'" style="flex:1;border:1px solid #b9aa8d;border-radius:9px;padding:9px;background:'+(compareId===g.id?'#f5e3b7':'#fffaf0')+';color:#21343a;font-weight:700">Compare</button>'+(ownedItem?'<button data-toggle="'+g.id+'" style="flex:1;border:0;border-radius:9px;padding:9px;background:#203a42;color:white;font-weight:700">'+(active?'Unequip':'Equip')+'</button>':'<button disabled style="flex:1;border:0;border-radius:9px;padding:9px;background:#ded3bc;color:#716958;font-weight:700">'+g.price+' XP at market</button>')+'</div></div>';
+  }).join('');
+  const comparison='<div style="border:1px solid #d4c9af;border-radius:14px;padding:13px;margin-top:12px;background:#fffaf0"><div class="eyebrow">Gear comparison</div><strong>'+selected.icon+' '+selected.name+'</strong><p style="font-size:13px;margin:6px 0">'+selected.bonus+'</p><p style="font-size:12px;margin:6px 0"><strong>Category:</strong> '+selected.category+'</p><p style="font-size:12px;margin:6px 0">'+selected.compare+'</p><div style="border-top:1px solid #e0d5c0;margin-top:9px;padding-top:9px;font-size:12px"><strong>Current active bonuses</strong><p style="margin:5px 0">'+(equipped.length?gear.filter(g=>equipped.includes(g.id)).map(g=>g.icon+' '+g.name+': '+g.bonus).join('<br>'):'No gear bonuses active. Equip an item to use its effect.')+'</p></div></div>';
+  $('card').innerHTML='<div class="eyebrow">Your travel gear</div><h2>Inventory</h2><p>✨ XP balance: <strong>'+xp+'</strong> · Gear owned: <strong>'+inventory.length+'/'+inventorySlotCount+'</strong></p><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0">'+slots+'</div><p style="font-size:12px;color:#655b49">Tap Equip or Unequip to change active effects. Your gear and choices save with your journey.</p>'+items+comparison+'<div class="bottomrow"><button id="inventoryClose">Back to the road</button></div>';
+  $('inventoryClose').onclick=()=>fromInn?openInnWelcome():closeCard();
+  document.querySelectorAll('[data-toggle]').forEach(btn=>btn.onclick=()=>{
+   const id=btn.dataset.toggle;
+   if(!inventory.includes(id))return;
+   if(equipped.includes(id))equipped=equipped.filter(item=>item!==id);else equipped.push(id);
+   save();render();
+  });
+  document.querySelectorAll('[data-compare]').forEach(btn=>btn.onclick=()=>{compareId=btn.dataset.compare;render()});
+ }
+ openCard('');
+ render();
+}
 function openInnWelcome(){
- openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="ok">Begin the journey</button></div>`);
+ openCard(`<div class="eyebrow">A safe place on the road</div><h2>Welcome to the Inn</h2><p>You step out from the inn into the hills of Bethlehem, ready to meet fellow travelers and discover the good news.</p><p><strong>Innkeeper:</strong> May your road be peaceful, and may you carry kindness wherever you go.</p><div class="bottomrow"><button id="innInventory">🎒 Check inventory</button><button id="ok">Begin the journey</button></div>`);
  $('ok').onclick=closeCard;
+ $('innInventory').onclick=()=>openInventory(true);
 }
 function interact(){
  if(interacting)return;
@@ -233,20 +271,30 @@ function interact(){
 $('interact').addEventListener('click',interact);
 $('run').addEventListener('click',()=>{running=!running;$('run').textContent=running?'🏃 RUNNING':'🏃 WALK';toast(running?'Running enabled':'Walking enabled')});
 
-$('journal').addEventListener('click',()=>{
-
-  openCard(`<div class="eyebrow">Your travel journal</div><h2>Kingdom Journey</h2><p><strong>Quest:</strong> ${mangerDone?'Chapter 2 complete':quizDone&&scrolls>=3?'Chapter 2: Visit the manger':questDone?'Shepherd quest complete':'The shepherds’ announcement'}</p><p><strong>Scripture:</strong> ${mangerDone||quizDone&&scrolls>=3?'Luke 2:12–16':'Luke 2:8–20'}</p><p><strong>Reflection:</strong> ${mangerDone?'Where might you recognize hope in an unexpected place?':'What might the shepherds have felt when they heard the announcement? What good news would you want to share?'}</p><p><strong>Progress:</strong> ${xp} XP · ${scrolls}/3 scrolls · Level ${1+Math.floor(xp/50)}</p><p><strong>Market inventory:</strong> ${inventory.length?inventory.map(id=>({lantern:'🏮 Lantern',cloak:'🧥 Festival Cloak',boots:'🥾 Swift Boots'}[id]||id)).join(', '):'No items yet'}</p><p style="font-size:12px;color:#655b49">Progress saves in this browser on this device.</p><div class="bottomrow"><button id="ok">Close journal</button><button id="resetSave" class="secondary">Reset progress</button></div>`);
-
-  $('ok').onclick=closeCard;
-
-  $('resetSave').onclick=()=>{if(confirm('Reset all Kingdom Journey progress on this device?')){localStorage.removeItem('kj-free-save');location.reload()}};
-
-});
+$('inventory').addEventListener('click',openInventory);
+function openJournal(){
+ const notes=[
+  {title:'The Angel’s Announcement',ref:'Luke 2:9–10',text:'An angel of the Lord appears to the shepherds, announcing good news and great joy for all the people.',reflection:'What kind of news brings you hope when life feels uncertain?'},
+  {title:'A Sign for the Shepherds',ref:'Luke 2:11–12',text:'The shepherds are told they will find a baby wrapped in cloths and lying in a manger.',reflection:'Why might an ordinary, humble sign carry extraordinary meaning?'},
+  {title:'Wonder Shared with Others',ref:'Luke 2:15–20',text:'The shepherds go to Bethlehem, see what has happened, and share what they have been told.',reflection:'What good news or kindness could you share with someone else?'}
+ ];
+ const chapters=[
+  {title:'The Shepherds’ Announcement',ref:'Luke 2:8–20',done:quizDone,summary:'Meet the shepherd and learn about the angel’s announcement of good news.',reward:'25 XP · Shepherd quiz'},
+  {title:'A Sign in the Manger',ref:'Luke 2:12–16',done:mangerDone,summary:'Follow the star to Bethlehem and discover the sign given to the shepherds.',reward:'30 XP · Manger quiz'}
+ ];
+ const stamp=done=>done?'<span style="display:inline-block;border:2px solid #47754b;color:#315b38;border-radius:7px;padding:4px 7px;font-size:10px;font-weight:900;letter-spacing:.08em;transform:rotate(-3deg)">✓ QUEST COMPLETE</span>':'<span style="display:inline-block;border:1px solid #b9aa8d;color:#776b57;border-radius:7px;padding:4px 7px;font-size:10px;font-weight:800">NOT YET COMPLETE</span>';
+ const chapterCards=chapters.map((ch,i)=>'<div style="border:1px solid #d4c9af;border-radius:14px;padding:13px;margin:9px 0;background:#fffaf0"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#8b6322">CHAPTER '+(i+1)+'</div><strong>'+ch.title+'</strong></div><div style="font-size:24px">'+(ch.done?'📜':'🔒')+'</div></div><p style="font-size:12px;margin:7px 0">'+ch.summary+'</p><p style="font-size:11px;margin:5px 0"><strong>Scripture:</strong> '+ch.ref+'</p><p style="font-size:11px;margin:8px 0">'+stamp(ch.done)+'</p><div style="font-size:11px;color:#655b49">'+(ch.done?'Reward recorded: '+ch.reward:'Reward: '+ch.reward)+'</div></div>').join('');
+ const collected=notes.filter((n,i)=>scrollItems[i]&&scrollItems[i].got);
+ const noteCards=collected.length?collected.map(n=>'<div style="border-left:4px solid #c39b4b;padding:10px 12px;margin:10px 0;background:#fffaf0;border-radius:0 12px 12px 0"><div style="font-size:10px;color:#8b6322;font-weight:800;letter-spacing:.08em">SCRIPTURE NOTE</div><strong>'+n.title+'</strong><div style="font-size:11px;color:#655b49;margin-top:3px">'+n.ref+'</div><p style="font-size:13px;margin:7px 0">'+n.text+'</p><p style="font-size:12px;margin:6px 0"><strong>Reflect:</strong> '+n.reflection+'</p></div>').join(''):'<div style="border:1px dashed #b9aa8d;border-radius:14px;padding:18px;text-align:center;background:#fffaf0"><div style="font-size:30px">📜</div><strong>No Scripture notes collected yet</strong><p style="font-size:13px">Explore the hillside and collect the three glowing scrolls. Each one adds a note to this journal.</p></div>';
+ openCard('<div class="eyebrow">A record of your journey</div><h2>Traveler’s Journal</h2><p style="font-size:13px">Your story, completed quests, and Scripture discoveries, gathered in one place.</p><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0"><div style="background:#e8dfc9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:19px">⭐</div><strong>'+xp+'</strong><div style="font-size:10px">XP earned</div></div><div style="background:#e8dfc9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:19px">📜</div><strong>'+scrolls+'/3</strong><div style="font-size:10px">Scrolls found</div></div><div style="background:#e8dfc9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:19px">🏅</div><strong>'+chapters.filter(ch=>ch.done).length+'/2</strong><div style="font-size:10px">Quests stamped</div></div></div><div class="eyebrow" style="margin-top:16px">Chapter entries</div>'+chapterCards+'<div class="eyebrow" style="margin-top:18px">Collected Scripture notes · '+collected.length+'/3</div>'+noteCards+'<div style="border-top:1px solid #d4c9af;margin-top:16px;padding-top:12px;font-size:11px;color:#655b49">Your journal updates as you complete quests and collect scrolls. Progress is saved on this device.</div><div class="bottomrow"><button id="journalClose">Close journal</button></div>');
+ $('journalClose').onclick=closeCard;
+}
+$('journal').addEventListener('click',openJournal);
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))closeCard()});
 document.querySelectorAll('.ctrl').forEach(btn=>{const dir=btn.dataset.dir;const down=e=>{e.preventDefault();keys[dir]=true};const up=e=>{e.preventDefault();keys[dir]=false};btn.addEventListener('pointerdown',down);btn.addEventListener('pointerup',up);btn.addEventListener('pointercancel',up);btn.addEventListener('pointerleave',up)});
 addEventListener('keydown',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=true;if(['ArrowDown','s','S'].includes(e.key))keys.down=true;if(['ArrowLeft','a','A'].includes(e.key))keys.left=true;if(['ArrowRight','d','D'].includes(e.key))keys.right=true;if(e.key===' '||e.key==='Enter'){e.preventDefault();interact()}});
 addEventListener('keyup',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=false;if(['ArrowDown','s','S'].includes(e.key))keys.down=false;if(['ArrowLeft','a','A'].includes(e.key))keys.left=false;if(['ArrowRight','d','D'].includes(e.key))keys.right=false});
-function frame(t){let dt=Math.min((t-last)/16.67||1,2);last=t;if(!interacting){let dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);if(dx||dy){let mag=Math.hypot(dx,dy);const pace=player.speed*(inventory.includes('boots')?1.2:1)*(running?1.75:1);player.x=clamp(player.x+dx/mag*pace*dt,35,world.w-35);player.y=clamp(player.y+dy/mag*pace*dt,55,world.h-25);player.dir=Math.atan2(dy,dx);if(Math.random()<.035)save()}}draw();drawMiniMap();setHint();requestAnimationFrame(frame)}
+function frame(t){let dt=Math.min((t-last)/16.67||1,2);last=t;if(!interacting){let dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);if(dx||dy){let mag=Math.hypot(dx,dy);const pace=player.speed*(equipped.includes('boots')?1.2:1)*(running?1.75:1);player.x=clamp(player.x+dx/mag*pace*dt,35,world.w-35);player.y=clamp(player.y+dy/mag*pace*dt,55,world.h-25);player.dir=Math.atan2(dy,dx);if(Math.random()<.035)save()}}draw();drawMiniMap();setHint();requestAnimationFrame(frame)}
 updateHud();
 if(!Object.keys(saved).length){openInnWelcome();}
 requestAnimationFrame(frame);
