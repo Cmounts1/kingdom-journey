@@ -84,7 +84,7 @@ function sphere(r,material,x,y,z,parent=scene,detail=0){return mesh(new THREE.Ic
 
 const ground=box(120,.35,120,materials.grass,0,-.24,0);ground.receiveShadow=true;
 // Soft rolling hills, made from low-poly mounds.
-for(let i=0;i<13;i++){const x=(i%5-2)*13+(Math.random()-.5)*4,z=-17-Math.floor(i/5)*13;const h=2+Math.random()*3;const hill=sphere(1, i%3?materials.grass2:materials.grass,x,h*.35,z,null,1);hill.scale.set(7+Math.random()*3,h,5+Math.random()*3);hill.castShadow=false;}
+for(let i=0;i<13;i++){const x=(i%5-2)*13+(Math.random()-.5)*4,z=-17-Math.floor(i/5)*13;const h=2+Math.random()*3;const hill=sphere(1, i%3?materials.grass2:materials.grass,x,h*.35,z,scene,1);hill.scale.set(7+Math.random()*3,h,5+Math.random()*3);hill.castShadow=false;}
 // A winding sandy approach.
 const path=box(4,.08,23,materials.path,0,.0,2);path.rotation.y=-.12;
 for(let i=0;i<12;i++){const s=box(.38,.09,.55,materials.stone,Math.sin(i*.8)*.65,.06,11-i*1.7);s.rotation.y=(i%2-.5)*.2;}
@@ -125,13 +125,13 @@ for(const [x,z] of [[-5,-4],[5,-4],[-5,-9],[5,-9]]){
 for(let i=0;i<18;i++){
  const x=(i%2?1:-1)*(6.2+Math.random()*2),z=-2-Math.random()*13;
  const stem=cylinder(.04,.06,.6,materials.leaf,x,.3,z,5);
- sphere(.2, i%2?materials.leaf:materials.leaf2,x,.7,z,null,1);
+ sphere(.2, i%2?materials.leaf:materials.leaf2,x,.7,z,scene,1);
 }
 // Stylized trees.
 function tree(x,z,size=1){
  cylinder(.22*size,.32*size,1.8*size,materials.trunk,x,.9*size,z,7);
- const a=sphere(1.05*size,materials.leaf,x,2.0*size,z,null,1);a.scale.set(1,1.15,.95);
- const b=sphere(.75*size,materials.leaf2,x+.42*size,2.5*size,z-.12*size,null,1);
+ const a=sphere(1.05*size,materials.leaf,x,2.0*size,z,scene,1);a.scale.set(1,1.15,.95);
+ const b=sphere(.75*size,materials.leaf2,x+.42*size,2.5*size,z-.12*size,scene,1);
 }
 [[-10,-5],[-12,-13],[10,-8],[12,-17],[-8,-20],[7,3],[14,1]].forEach((p,i)=>tree(p[0],p[1],.8+(i%3)*.18));
 // Distant little cottages add storybook scale.
@@ -180,17 +180,26 @@ zone.addEventListener('pointerup',releaseJoy);zone.addEventListener('pointercanc
 
 const message=document.querySelector('#message');
 let entered=false;
+const interactButton=document.querySelector('#interact');
+const doorPosition=new THREE.Vector3(0,0,-3.9);
+function nearDoor(){return player.position.distanceTo(doorPosition)<3.4}
 function interact(){
- const near=player.position.distanceTo(new THREE.Vector3(0,0,-3.9))<3.4;
- if(near){entered=!entered;message.style.display=entered?'block':'none';}
- else{
+ if(nearDoor()){
+   entered=!entered;
+   message.querySelector('h2').textContent=entered?'Welcome, traveler':'The path awaits';
+   message.querySelector('p').textContent=entered
+     ?'The innkeeper’s lantern is lit. This 3D scene is a first step toward the larger journey.'
+     :'You step back outside, ready to continue your journey.';
+   message.style.display=entered?'block':'none';
+ }else{
    message.querySelector('h2').textContent='The inn is ahead';
-   message.querySelector('p').textContent='Follow the stone path to the lantern-lit doorway, then tap Enter Inn.';
+   message.querySelector('p').textContent='Follow the stone path toward the glowing doorway. The button will be ready when you get close.';
    message.style.display='block';
-   setTimeout(()=>{if(!entered)message.style.display='none'},2400);
+   window.clearTimeout(window.kingdomHintTimer);
+   window.kingdomHintTimer=window.setTimeout(()=>{if(!entered)message.style.display='none'},2400);
  }
 }
-document.querySelector('#interact').addEventListener('click',interact);
+interactButton.addEventListener('click',interact);
 document.querySelector('#reset').addEventListener('click',()=>{player.position.set(0,0,7);player.rotation.y=0;camera.position.set(0,5,15);entered=false;message.style.display='none';});
 const clock=new THREE.Clock();
 const cameraTarget=new THREE.Vector3();
@@ -213,6 +222,8 @@ function animate(){
   player.rotation.y=THREE.MathUtils.damp(player.rotation.y,angle,12,dt);
   body.position.y=Math.abs(Math.sin(clock.elapsedTime*10))*.045;
  }else{body.position.y=THREE.MathUtils.damp(body.position.y,0,8,dt)}
+ // Keep the action label honest: entry only activates near the doorway.
+ interactButton.textContent=nearDoor()?(entered?'Leave Inn':'Enter Inn'):'Walk to Inn';
  // Camera stays behind the traveler and eases into position.
  forward.set(Math.sin(player.rotation.y),0,Math.cos(player.rotation.y));
  desiredCamera.set(player.position.x+forward.x*7,player.position.y+4.2,player.position.z+forward.z*7);
