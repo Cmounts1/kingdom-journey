@@ -554,8 +554,8 @@ function interact(){
  if(n.kind==='questItem'){if(!sideQuestStarted){toast('Speak with your path guide to accept the side quest first.');return}collectQuestItem();return}
 }
 interactButton.addEventListener('click',interact);
-let running=false;
-$('run').addEventListener('click',()=>{running=!running;$('run').textContent=running?'🏃 Running':'🏃 Walk';toast(running?'Running enabled':'Walking enabled')});
+window.running = false;
+$('run').addEventListener('click',()=>{window.running=!window.running;$('run').textContent=window.running?'🏃 Running':'🏃 Walk';toast(window.running?'Running enabled':'Walking enabled')});
 $('inventory').addEventListener('click',()=>openInventory(false));
 $('journal').addEventListener('click',openJournal);
 $('reset').addEventListener('click',()=>{player.position.set(0,0,7);player.rotation.y=0;cameraOffset.set(0,5.2,9.5);roof1.visible=true;cottageRoofs.forEach(r=>r.visible=true);entered=false;currentBuilding=null;document.querySelector('.topbar').style.display='';topHint.style.display='';questEl.style.display='';statsEl.style.display='';message.style.display='none';closeCard()});
@@ -604,7 +604,7 @@ function animate(){
  const len=Math.hypot(x,z);
  if(len>.12&&overlay.style.display!=='flex'){
   x/=Math.max(1,len);z/=Math.max(1,len);
-  const speed=4.1*(equipped.includes('boots')?1.2:1)*(running?1.75:1);
+  const speed=4.1*(equipped.includes('boots')?1.2:1)*(window.running?1.75:1);
   const nextX=THREE.MathUtils.clamp(player.position.x+x*speed*dt,-18,18);
   const nextZ=THREE.MathUtils.clamp(player.position.z+z*speed*dt,-24,16);
   // Resolve axes separately so the player can slide along walls instead of sticking.
