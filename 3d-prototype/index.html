@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#203b42">
-<title>Kingdom Journey | 3D Inn Prototype</title>
+<title>Kingdom Journey | 3D Bible Adventure</title>
 <style>
 :root{color-scheme:dark;--cream:#fff3d7;--gold:#f5cc72;--panel:rgba(22,39,42,.88)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -19,6 +19,23 @@ canvas{display:block;width:100%;height:100%}
 #message{position:absolute;top:23%;left:50%;transform:translateX(-50%);width:min(90%,440px);text-align:center;background:var(--panel);border:1px solid #f5cc7280;border-radius:18px;padding:16px 18px;display:none;box-shadow:0 12px 35px #18333050}
 #message h2{margin:0 0 7px;color:var(--gold);font-size:23px}
 #message p{margin:0;line-height:1.45;font-size:15px}
+ #stats{position:absolute;top:76px;left:12px;display:flex;gap:7px;flex-wrap:wrap;max-width:calc(100% - 24px);font:12px system-ui,sans-serif}
+ .stat,#quest{background:var(--panel);border:1px solid #fff3d744;border-radius:12px;padding:8px 10px;box-shadow:0 5px 20px #142d2d25}
+ #quest{position:absolute;top:120px;left:12px;max-width:min(290px,calc(100% - 24px));font:12px/1.35 system-ui,sans-serif}
+ #quest strong{display:block;color:var(--gold);margin-bottom:3px;text-transform:uppercase;letter-spacing:.08em;font-size:10px}
+ #overlay{position:fixed;inset:0;z-index:8;display:none;align-items:center;justify-content:center;padding:18px;background:#101f24a8;pointer-events:auto}
+ #card{width:min(100%,520px);max-height:min(82dvh,760px);overflow:auto;background:#fff3d7;color:#263b3b;border:2px solid #c49a4b;border-radius:20px;padding:20px;box-shadow:0 18px 55px #101f2488;font:15px/1.45 system-ui,sans-serif;touch-action:pan-y}
+ #card h2{font: bold 25px Georgia,serif;margin:5px 0 10px;color:#263b3b}
+ #card p{margin:9px 0}
+ #card .eyebrow{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#8b6322}
+ #card button{border:0;border-radius:12px;padding:11px 13px;background:#203b42;color:#fff3d7;font-weight:800;font-size:14px;touch-action:manipulation}
+ #card button.secondary{background:#ded3bc;color:#263b3b}
+ #card button:disabled{opacity:.45}
+ #card .choice{display:block;width:100%;text-align:left;margin:8px 0;padding:13px;background:#fffaf0;color:#263b3b;border:1px solid #c9b991}
+ #card .bottomrow{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:16px}
+ #toast{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);display:none;max-width:85%;text-align:center;font:bold 14px system-ui,sans-serif;z-index:9}
+ 
+
 #controls{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:flex-end;padding:0 18px;pointer-events:auto}
 #stickZone{width:132px;height:132px;border-radius:50%;background:#1a353b55;border:2px solid #fff3d777;position:relative;touch-action:none;box-shadow:0 5px 20px #1a353b25}
 #stick{position:absolute;width:54px;height:54px;left:37px;top:37px;border-radius:50%;background:#f5cc72dd;border:2px solid #fff3d7;box-shadow:0 3px 10px #142d2d55;pointer-events:none}
@@ -34,19 +51,26 @@ canvas{display:block;width:100%;height:100%}
 <body>
 <div id="hud">
   <div class="topbar">
-    <div class="brand"><strong>✦ KINGDOM JOURNEY</strong><span>3D field test · The Inn at Bethlehem</span></div>
-    <div class="hint">Explore the village. Walk close to a doorway, then tap <b>Enter Building</b>.</div>
+    <div class="brand"><strong>✦ KINGDOM JOURNEY</strong><span>3D Bible adventure · Bethlehem</span></div>
+    <div class="hint" id="hint">Choose your path, then explore Bethlehem.</div>
   </div>
-  <div id="message"><h2>Welcome, traveler</h2><p>The innkeeper’s lantern is lit. This 3D scene is a first step toward the larger journey.</p></div>
+  <div id="stats"><div class="stat">⭐ Level <b id="level">1</b></div><div class="stat">✨ XP <b id="xp">0</b></div><div class="stat">📜 Scrolls <b id="scrolls">0</b>/3</div></div>
+  <div id="quest"><strong>Current Quest</strong><span id="questText">Meet the shepherd and hear the announcement.</span></div>
+  <div id="message"><h2>Welcome, traveler</h2><p>The innkeeper’s lantern is lit.</p></div>
   <div id="controls">
     <div id="stickZone" aria-label="Movement joystick"><div id="stick"></div></div>
     <div class="rightControls">
-      <button class="controlButton" id="interact">Find Door</button>
+      <button class="controlButton" id="interact">Talk / Interact</button>
+      <button class="controlButton" id="run">🏃 Walk</button>
+      <button class="controlButton" id="inventory">🎒 Inventory</button>
+      <button class="controlButton" id="journal">📖 Journal</button>
       <button class="controlButton" id="reset">Reset View ↻</button>
     </div>
   </div>
   <div id="footer">Desktop: WASD / arrow keys · Mobile: drag the gold joystick</div>
 </div>
+<div id="overlay"><div id="card"></div></div>
+<div id="toast" class="toast"></div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
 
