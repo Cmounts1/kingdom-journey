@@ -57,18 +57,48 @@ for(let i=0;i<12;i++){const x=-24+(i%6)*9,z=-27-Math.floor(i/6)*9;cube(x,1.2,z,3
 cube(-5,2.2,7,7,4.4,5,'#d8bd91');roof(-5,5.2,7,5.4,3,'#754d38');cube(-5,.95,9.55,1.2,1.9,.14,'#503a2b');cube(-7.1,2.5,9.57,1.1,1.1,.14,'#d4a967');cube(-2.9,2.5,9.57,1.1,1.1,.14,'#d4a967');
 cube(4,1.7,-25,5,3.4,4,'#b99a6b');roof(4,4,-25,4,2.4,'#6b4936');cube(4,.35,-22.4,1.3,.45,.6,'#88613f');
 for(let i=0;i<45;i++){const x=(Math.random()-.5)*65,z=12-Math.random()*62;if(Math.abs(x)<5&&z<14&&z>-30)continue;const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.25+Math.random()*.45),material(i%2?'#858b62':'#aaa17b'));rock.position.set(x,.15,z);rock.scale.y=.6;rock.castShadow=true;scene.add(rock)}
-for(let i=0;i<27;i++){const x=(Math.random()-.5)*60,z=10-Math.random()*58;if(Math.abs(x)<6&&z<14&&z>-30)continue;const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,1.1,7),material('#70523a'));trunk.position.set(x,.55,z);scene.add(trunk);const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(.95+Math.random()*.5,1),material(i%3?'#66825c':'#7f9561'));crown.position.set(x,1.65,z);crown.scale.set(1.25,.85,1);crown.castShadow=true;scene.add(crown)}
-// Sparse dry-grass tufts and weathered pebbles add ground-level detail without blocking the trail.
-const grassMats=[material('#858657'),material('#a19a61'),material('#6f7b4b')];
-const bladeGeo=new THREE.ConeGeometry(.075,.48,4);
+// More natural olive-like trees: tapered trunks, visible branches, and layered irregular foliage.
+const barkMats=[material('#67503a'),material('#806044'),material('#5e4a35')];
+const leafMats=[material('#536f49'),material('#667d4b'),material('#7d8c55'),material('#89905c')];
+for(let i=0;i<27;i++){
+  const x=(Math.random()-.5)*60,z=10-Math.random()*58;
+  if(Math.abs(x)<6&&z<14&&z>-30)continue;
+  const h=1.2+Math.random()*.65,lean=(Math.random()-.5)*.22;
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.09,.19,h,8),barkMats[i% barkMats.length]);
+  trunk.position.set(x,.5+h/2,z);trunk.rotation.z=lean;trunk.castShadow=true;trunk.receiveShadow=true;scene.add(trunk);
+  for(let b=0;b<3;b++){
+    const branch=new THREE.Mesh(new THREE.CylinderGeometry(.035,.075,.48,6),barkMats[(i+b)%barkMats.length]);
+    branch.position.set(x+(b-1)*.22, .85+h*.42+(b%2)*.12,z+(b%2)*.1);
+    branch.rotation.z=(b-1)*.65;branch.rotation.x=(b-1)*.22;branch.castShadow=true;scene.add(branch);
+  }
+  // Several overlapping, differently sized foliage clusters break up the single-ball silhouette.
+  for(let b=0;b<6;b++){
+    const size=.48+Math.random()*.32;
+    const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(size,2),leafMats[(i+b)%leafMats.length]);
+    crown.position.set(x+(Math.random()-.5)*.9,1.45+h*.45+Math.random()*.55,z+(Math.random()-.5)*.75);
+    crown.scale.set(1.15,.78+Math.random()*.3,1);
+    crown.rotation.set(Math.random()*.3,Math.random()*Math.PI,Math.random()*.3);
+    crown.castShadow=true; crown.receiveShadow=true;scene.add(crown);
+  }
+}
+// Denser, varied dry grass: curved-looking blades, mixed heights, and small natural clumps.
+const grassMats=[material('#777b48'),material('#96905a'),material('#697746'),material('#aaa06a'),material('#858b55')];
+const bladeGeo=new THREE.ConeGeometry(.055,.42,5);
 let detailSeed=2197;const detailRand=()=>{detailSeed=(detailSeed*1664525+1013904223)>>>0;return detailSeed/4294967296};
-for(let i=0;i<72;i++){
+for(let i=0;i<155;i++){
   const x=(detailRand()-.5)*68,z=14-detailRand()*63;
-  // Leave the inn entrance, stepping-stone route, and nearby interaction areas open.
+  // Keep the inn entrance, stepping stones, and key interaction spots clear.
   const trailX=z>7?0:z>-2?1.4:z>-14?5.5:z>-23?2.2:0;
-  if(Math.abs(x-trailX)<3.2 || (Math.abs(x+5)<4&&z>7&&z<13) || (Math.abs(x-8)<3&&z>-11&&z<-3) || (Math.abs(x-4)<4&&z>-29&&z<-21)) continue;
-  const tuft=new THREE.Group();tuft.position.set(x,.02,z);
-  for(let b=0;b<3;b++){const blade=new THREE.Mesh(bladeGeo,grassMats[(i+b)%grassMats.length]);blade.position.set((b-1)*.09,.22,((b%2)-.5)*.1);blade.rotation.z=(b-1)*.32;blade.rotation.x=(b-1)*.12;tuft.add(blade)}
+  if(Math.abs(x-trailX)<3.3 || (Math.abs(x+5)<4&&z>7&&z<13) || (Math.abs(x-8)<3&&z>-11&&z<-3) || (Math.abs(x-4)<4&&z>-29&&z<-21)) continue;
+  const tuft=new THREE.Group();tuft.position.set(x,.015,z);
+  const blades=4+Math.floor(detailRand()*4);
+  for(let b=0;b<blades;b++){
+    const h=.22+detailRand()*.42;
+    const blade=new THREE.Mesh(new THREE.ConeGeometry(.035+detailRand()*.025,h,4),grassMats[Math.floor(detailRand()*grassMats.length)]);
+    blade.position.set((detailRand()-.5)*.25,h*.48,(detailRand()-.5)*.22);
+    blade.rotation.z=(detailRand()-.5)*.65;blade.rotation.x=(detailRand()-.5)*.5;
+    tuft.add(blade);
+  }
   scene.add(tuft);
 }
 const pebbleGeo=new THREE.DodecahedronGeometry(.22,0);
