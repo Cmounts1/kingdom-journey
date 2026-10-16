@@ -36,24 +36,24 @@ for(let i=0;i<groundPos.count;i++){
   groundPos.setZ(i,broad+fine+edge*(Math.sin(z*.16+x*.07)*.42+Math.cos(z*.12)*.24));
 }
 ground.geometry.computeVertexNormals();scene.add(ground);
-// Distant mountain ranges use custom ridge meshes rather than primitive spheres.
-// Overlapping silhouettes, irregular peaks, and atmospheric colors create depth like the reference landscape.
+// Filled mountain ranges: a closed profile with a solid lower body prevents the hollow, ribbon-like look.
 function makeMountainRange(opts){
-  const nx=100,nz=12,positions=[],indices=[];
+  const nx=120,nz=16,positions=[],indices=[];
   const {centerZ,width,depth,baseY,height,color,seed}=opts;
-  const peaks=[];
   let s=seed;const rand=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
-  for(let p=0;p<17;p++)peaks.push({x:(rand()-.5)*width*1.08,w:4+rand()*10,h:height*(.28+rand()*.72)});
+  const peaks=[];
+  for(let p=0;p<19;p++)peaks.push({x:(rand()-.5)*width*.96,w:4+rand()*11,h:height*(.25+rand()*.75)});
+  // Every vertex shares a broad lower mass; ridges rise from it rather than floating as thin strips.
   for(let iz=0;iz<=nz;iz++){
     const v=iz/nz,z=centerZ+(v-.5)*depth;
     for(let ix=0;ix<=nx;ix++){
       const u=ix/nx,x=(u-.5)*width;
       let silhouette=0;
-      for(const p of peaks){const q=(x-p.x)/p.w;silhouette+=p.h*Math.exp(-q*q*1.2)}
-      const frontFade=.78+.22*Math.cos(v*Math.PI*2);
-      const rugged=(Math.sin(x*.21+seed)*.35+Math.sin(x*.47+seed*2)*.13+Math.cos(x*.09-seed)*.25);
-      const y=baseY+silhouette*frontFade+Math.max(0,silhouette*.12)*rugged;
-      positions.push(x,y,z+Math.sin(x*.035+seed)*.9);
+      for(const p of peaks){const q=(x-p.x)/p.w;silhouette+=p.h*Math.exp(-q*q*1.05)}
+      const rugged=(Math.sin(x*.21+seed)*.3+Math.sin(x*.47+seed*2)*.11+Math.cos(x*.09-seed)*.2);
+      const sideShape=Math.sin(v*Math.PI);
+      const y=baseY+height*.42+silhouette*.48+Math.max(0,silhouette*.12)*rugged;
+      positions.push(x,y,z+Math.sin(x*.035+seed)*.55);
     }
   }
   for(let iz=0;iz<nz;iz++)for(let ix=0;ix<nx;ix++){
@@ -63,12 +63,18 @@ function makeMountainRange(opts){
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
   const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true,side:THREE.DoubleSide}));
   mesh.receiveShadow=true;scene.add(mesh);
+  // Solid, faceted mountain foot extends below the ridgeline and closes the silhouette visually.
+  const footGeo=new THREE.IcosahedronGeometry(1,2);
+  const foot=new THREE.Mesh(footGeo,new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true}));
+  foot.scale.set(width*.53,height*.58,depth*.72);
+  foot.position.set(0,baseY+height*.12,centerZ);
+  foot.receiveShadow=true;scene.add(foot);
 }
-// Far blue-lavender silhouettes fade into the sky; nearer ridges are warmer and more detailed.
-makeMountainRange({centerZ:-88,width:210,depth:9,baseY:1,height:7,color:'#a6a7a0',seed:19});
-makeMountainRange({centerZ:-73,width:190,depth:9,baseY:.1,height:9,color:'#96988c',seed:37});
-makeMountainRange({centerZ:-60,width:170,depth:10,baseY:-.2,height:10,color:'#858b77',seed:53});
-makeMountainRange({centerZ:-48,width:150,depth:11,baseY:-.45,height:8,color:'#737e65',seed:71});
+// Layered filled ranges: cool hazy mountains far away, warmer and darker ridges closer in.
+makeMountainRange({centerZ:-91,width:220,depth:15,baseY:-1.8,height:8,color:'#a6a7a0',seed:19});
+makeMountainRange({centerZ:-76,width:200,depth:16,baseY:-2.2,height:10,color:'#96988c',seed:37});
+makeMountainRange({centerZ:-61,width:180,depth:17,baseY:-2.5,height:12,color:'#858b77',seed:53});
+makeMountainRange({centerZ:-47,width:160,depth:18,baseY:-2.8,height:13,color:'#737e65',seed:71});
 /* Oversized green mounds removed to keep the playable landscape open. */
 const stoneMat=material('#b9b09a');const stoneEdge=material('#8d8876');const stonePts=[[0,13],[.25,10],[.55,7],[1.2,4],[2.4,1],[4,-2],[5.8,-5],[6.8,-8],[6.5,-11],[5.2,-14],[3.4,-17],[1.7,-20],[.5,-23],[0,-26],[0,-28]];stonePts.forEach((p,i)=>{const stone=new THREE.Mesh(new THREE.CylinderGeometry(.72+Math.sin(i*2.3)*.08,.82, .18, 7),i%3===0?stoneEdge:stoneMat);stone.position.set(p[0]+Math.sin(i*1.7)*.38,.055,p[1]);stone.rotation.y=(i%2?-.12:.18);stone.scale.set(1.18,.72,.78);stone.castShadow=true;stone.receiveShadow=true;scene.add(stone)});
 for(let i=0;i<12;i++){const x=-24+(i%6)*9,z=-27-Math.floor(i/6)*9;cube(x,1.2,z,3.5,2.4,3,'#d8c6a4');roof(x,3,z,2.6,1.8,'#92684b');cube(x,.7,z+1.55,.7,1.4,.12,'#594333')}
