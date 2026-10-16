@@ -9,7 +9,7 @@ const material=c=>new THREE.MeshStandardMaterial({color:c,roughness:.88});
 function cube(x,y,z,w,h,d,c){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(c));o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
 function roof(x,y,z,r,h,c){const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,4),material(c));o.rotation.y=Math.PI/4;o.position.set(x,y,z);o.castShadow=true;scene.add(o)}
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150),material('#a5ad78'));ground.rotation.x=-Math.PI/2;ground.position.y=-.08;ground.receiveShadow=true;scene.add(ground);
-for(let i=0;i<10;i++){const side=i%2===0?-1:1;const h=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),material(i%2?'#829d7c':'#92a77d'));h.scale.set(5+Math.random()*3,.9+Math.random()*.5,5+Math.random()*3);h.position.set(side*(19+Math.random()*7),-1.05,12-Math.floor(i/2)*14);scene.add(h)}
+/* Oversized green mounds removed to keep the playable landscape open. */
 const roadPts=[[0,.02,13],[1,.02,5],[5,.02,-2],[7,.02,-10],[3,.02,-18],[0,.02,-28]].map(p=>new THREE.Vector3(...p));const road=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(roadPts),80,2.4,8,false),material('#d8c69e'));scene.add(road);
 for(let i=0;i<12;i++){const x=-24+(i%6)*9,z=-27-Math.floor(i/6)*9;cube(x,1.2,z,3.5,2.4,3,'#d8c6a4');roof(x,3,z,2.6,1.8,'#92684b');cube(x,.7,z+1.55,.7,1.4,.12,'#594333')}
 cube(-5,2.2,7,7,4.4,5,'#d8bd91');roof(-5,5.2,7,5.4,3,'#754d38');cube(-5,.95,9.55,1.2,1.9,.14,'#503a2b');cube(-7.1,2.5,9.57,1.1,1.1,.14,'#d4a967');cube(-2.9,2.5,9.57,1.1,1.1,.14,'#d4a967');
