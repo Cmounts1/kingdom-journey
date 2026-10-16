@@ -13,6 +13,16 @@ const terrainCanvas=document.createElement('canvas');terrainCanvas.width=terrain
 const terrainCtx=terrainCanvas.getContext('2d');terrainCtx.fillStyle='#928d63';terrainCtx.fillRect(0,0,256,256);
 let terrainSeed=7341;const terrainRand=()=>{terrainSeed=(terrainSeed*1664525+1013904223)>>>0;return terrainSeed/4294967296};
 for(let i=0;i<7200;i++){const x=terrainRand()*256,y=terrainRand()*256,r=.4+terrainRand()*2.8;const colors=['rgba(65,83,47,.18)','rgba(177,157,104,.25)','rgba(213,192,142,.20)','rgba(65,61,43,.12)','rgba(133,139,87,.22)'];terrainCtx.fillStyle=colors[i%colors.length];terrainCtx.beginPath();terrainCtx.ellipse(x,y,r*1.6,r,terrainRand()*Math.PI,0,Math.PI*2);terrainCtx.fill()}
+// Broad translucent soil patches break up the repeated ground texture into natural-looking earth and scrub.
+for(let i=0;i<46;i++){
+  const x=terrainRand()*256,y=terrainRand()*256;
+  const rx=5+terrainRand()*18,ry=3+terrainRand()*10;
+  const patch=terrainCtx.createRadialGradient(x,y,1,x,y,Math.max(rx,ry));
+  const tint=i%3===0?'rgba(126,91,56,':'rgba(187,169,115,';
+  patch.addColorStop(0,tint+(i%3===0?'.22':'.18')+')');
+  patch.addColorStop(1,tint+'0)');
+  terrainCtx.fillStyle=patch;terrainCtx.beginPath();terrainCtx.ellipse(x,y,rx,ry,terrainRand()*Math.PI,0,Math.PI*2);terrainCtx.fill();
+}
 const terrainTexture=new THREE.CanvasTexture(terrainCanvas);terrainTexture.wrapS=terrainTexture.wrapT=THREE.RepeatWrapping;terrainTexture.repeat.set(9,9);terrainTexture.colorSpace=THREE.SRGBColorSpace;
 const groundMat=new THREE.MeshStandardMaterial({map:terrainTexture,color:'#d0c99a',roughness:1});
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150,70,70),groundMat);ground.rotation.x=-Math.PI/2;ground.position.y=-.08;ground.receiveShadow=true;
