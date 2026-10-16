@@ -8,7 +8,17 @@ scene.add(new THREE.HemisphereLight('#e8f7ff','#7d7951',2));const sun=new THREE.
 const material=c=>new THREE.MeshStandardMaterial({color:c,roughness:.88});
 function cube(x,y,z,w,h,d,c){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(c));o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
 function roof(x,y,z,r,h,c){const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,4),material(c));o.rotation.y=Math.PI/4;o.position.set(x,y,z);o.castShadow=true;scene.add(o)}
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150),material('#a5ad78'));ground.rotation.x=-Math.PI/2;ground.position.y=-.08;ground.receiveShadow=true;scene.add(ground);
+// Procedural earth-and-grass texture: generated locally so no external asset can break startup.
+const terrainCanvas=document.createElement('canvas');terrainCanvas.width=terrainCanvas.height=256;
+const terrainCtx=terrainCanvas.getContext('2d');terrainCtx.fillStyle='#928d63';terrainCtx.fillRect(0,0,256,256);
+let terrainSeed=7341;const terrainRand=()=>{terrainSeed=(terrainSeed*1664525+1013904223)>>>0;return terrainSeed/4294967296};
+for(let i=0;i<7200;i++){const x=terrainRand()*256,y=terrainRand()*256,r=.4+terrainRand()*2.8;const colors=['rgba(65,83,47,.18)','rgba(177,157,104,.25)','rgba(213,192,142,.20)','rgba(65,61,43,.12)','rgba(133,139,87,.22)'];terrainCtx.fillStyle=colors[i%colors.length];terrainCtx.beginPath();terrainCtx.ellipse(x,y,r*1.6,r,terrainRand()*Math.PI,0,Math.PI*2);terrainCtx.fill()}
+const terrainTexture=new THREE.CanvasTexture(terrainCanvas);terrainTexture.wrapS=terrainTexture.wrapT=THREE.RepeatWrapping;terrainTexture.repeat.set(9,9);terrainTexture.colorSpace=THREE.SRGBColorSpace;
+const groundMat=new THREE.MeshStandardMaterial({map:terrainTexture,color:'#d0c99a',roughness:1});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(150,150,70,70),groundMat);ground.rotation.x=-Math.PI/2;ground.position.y=-.08;ground.receiveShadow=true;
+const groundPos=ground.geometry.attributes.position;for(let i=0;i<groundPos.count;i++){const x=groundPos.getX(i),z=groundPos.getY(i);groundPos.setZ(i,(Math.sin(x*.11)+Math.cos(z*.13))*.12+Math.sin((x+z)*.055)*.18)}ground.geometry.computeVertexNormals();scene.add(ground);
+// Low, distant rocky ridges give the horizon a natural Judean-hills silhouette.
+for(let i=0;i<9;i++){const ridge=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),material(i%2?'#8f9873':'#aaa17c'));ridge.scale.set(10+terrainRand()*9,1.5+terrainRand()*2,5+terrainRand()*4);ridge.position.set(-52+i*13,-.35,-48-terrainRand()*12);ridge.receiveShadow=true;scene.add(ridge)}
 /* Oversized green mounds removed to keep the playable landscape open. */
 const stoneMat=material('#b9b09a');const stoneEdge=material('#8d8876');const stonePts=[[0,13],[.25,10],[.55,7],[1.2,4],[2.4,1],[4,-2],[5.8,-5],[6.8,-8],[6.5,-11],[5.2,-14],[3.4,-17],[1.7,-20],[.5,-23],[0,-26],[0,-28]];stonePts.forEach((p,i)=>{const stone=new THREE.Mesh(new THREE.CylinderGeometry(.72+Math.sin(i*2.3)*.08,.82, .18, 7),i%3===0?stoneEdge:stoneMat);stone.position.set(p[0]+Math.sin(i*1.7)*.38,.055,p[1]);stone.rotation.y=(i%2?-.12:.18);stone.scale.set(1.18,.72,.78);stone.castShadow=true;stone.receiveShadow=true;scene.add(stone)});
 for(let i=0;i<12;i++){const x=-24+(i%6)*9,z=-27-Math.floor(i/6)*9;cube(x,1.2,z,3.5,2.4,3,'#d8c6a4');roof(x,3,z,2.6,1.8,'#92684b');cube(x,.7,z+1.55,.7,1.4,.12,'#594333')}
