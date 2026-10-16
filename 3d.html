@@ -53,23 +53,47 @@ function fitHumanModel(root){
  if(size.y>0)root.scale.setScalar(1.82/size.y);
  const fitted=new THREE.Box3().setFromObject(root);
  root.position.y-=fitted.min.y;
- root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(Array.isArray(o.material))o.material.forEach(m=>{m.roughness=.92});else if(o.material)o.material.roughness=.92}});
+ root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(Array.isArray(o.material))o.material.forEach(m=>{m.roughness=.94});else if(o.material)o.material.roughness=.94}});
  return root;
 }
-function installRealHuman(root,target){
+function addBiblicalClothing(target,robeColor='#806348',wrapColor='#d0bd99'){
+ const robeMat=new THREE.MeshStandardMaterial({color:robeColor,roughness:1,side:THREE.DoubleSide});
+ const wrapMat=new THREE.MeshStandardMaterial({color:wrapColor,roughness:1,side:THREE.DoubleSide});
+ const leatherMat=new THREE.MeshStandardMaterial({color:'#65452f',roughness:1});
+ // Long, loose outer tunic overlays modern torso and trousers for a first-century silhouette.
+ const tunic=new THREE.Mesh(new THREE.CylinderGeometry(.34,.49,1.22,24,1,true),robeMat);
+ tunic.position.set(0,.78,0);tunic.castShadow=true;tunic.receiveShadow=true;target.add(tunic);
+ const shoulder=new THREE.Mesh(new THREE.SphereGeometry(.39,20,12),robeMat);
+ shoulder.scale.set(1,.42,.75);shoulder.position.set(0,1.34,0);target.add(shoulder);
+ // Draped shoulder mantle, simple cloth panels, belt, and head wrap.
+ const mantle=new THREE.Mesh(new THREE.BoxGeometry(.62,.78,.045),wrapMat);
+ mantle.position.set(0,1.04,-.245);mantle.rotation.x=-.08;target.add(mantle);
+ const belt=new THREE.Mesh(new THREE.TorusGeometry(.37,.027,8,28),leatherMat);
+ belt.rotation.x=Math.PI/2;belt.position.y=.78;target.add(belt);
+ const hood=new THREE.Mesh(new THREE.SphereGeometry(.285,20,14,0,Math.PI*2,0,Math.PI*.62),wrapMat);
+ hood.position.set(0,1.68,-.015);hood.scale.set(1,1.05,1.08);target.add(hood);
+ for(const side of [-1,1]){
+  const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(.105,.13,.52,12),robeMat);
+  sleeve.position.set(side*.37,1.18,0);sleeve.rotation.z=side*-.28;target.add(sleeve);
+  const sandal=new THREE.Mesh(new THREE.BoxGeometry(.24,.07,.34),leatherMat);
+  sandal.position.set(side*.16,.055,.07);target.add(sandal);
+ }
+}
+function installRealHuman(root,target,robeColor,wrapColor){
  while(target.children.length)target.remove(target.children[0]);
  const model=fitHumanModel(root);target.add(model);
+ addBiblicalClothing(target,robeColor,wrapColor);
 }
 humanLoader.load(humanAssetUrl,gltf=>{
  realHumanTemplate=gltf.scene;
- installRealHuman(realHumanTemplate,player);
+ installRealHuman(realHumanTemplate,player,'#536c79','#d7c7a6');
  humanModelReady=true;
  hint.textContent='Human character model loaded. Explore the hills beyond the inn.';
  const existingShepherd=scene.getObjectByProperty('userData.kind','shepherd');
  if(existingShepherd&&realHumanTemplate){
    const replacement=new THREE.Group();replacement.position.copy(existingShepherd.position);replacement.userData.kind='shepherd';
    scene.remove(existingShepherd);scene.add(replacement);
-   installRealHuman(realHumanTemplate.clone(true),replacement);
+   installRealHuman(realHumanTemplate.clone(true),replacement,'#826349','#c8b18a');
    replacement.rotation.y=Math.PI;
    window.kingdomShepherd=replacement;
  }
