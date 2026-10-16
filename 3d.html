@@ -2,6 +2,7 @@
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { clone as cloneSkinned } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/utils/SkeletonUtils.js';
 const scene=new THREE.Scene();scene.background=new THREE.Color('#a9d0d8');scene.fog=new THREE.Fog('#a9d0d8',40,115);
 const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,180);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.body.prepend(renderer.domElement);
@@ -47,7 +48,7 @@ const legs=player.userData.legs,arms=player.userData.arms,body=player.userData.t
    player movement remains controlled by the existing mobile controller. */
 const humanLoader=new GLTFLoader();
 const humanAssetUrl='https://www.innerscene.com/api/library/stepping-upward-3d-person-walking-20fd77c7/download';
-let humanModelReady=false,realHumanTemplate=null;
+let humanModelReady=false,realHumanTemplate=null,playerMixer=null,shepherdMixer=null,playerWalkAction=null,shepherdIdleAction=null;
 function fitHumanModel(root){
  const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3());
  if(size.y>0)root.scale.setScalar(1.82/size.y);
@@ -83,17 +84,29 @@ function installRealHuman(root,target,robeColor,wrapColor){
  while(target.children.length)target.remove(target.children[0]);
  const model=fitHumanModel(root);target.add(model);
  addBiblicalClothing(target,robeColor,wrapColor);
+ return model;
+}
+function startModelAnimation(root,clips,preferredNames){
+ if(!clips||!clips.length)return null;
+ const mixer=new THREE.AnimationMixer(root);
+ const preferred=clips.find(c=>preferredNames.some(n=>c.name.toLowerCase().includes(n)))||clips[0];
+ const action=mixer.clipAction(preferred);action.enabled=true;action.setLoop(THREE.LoopRepeat,Infinity);action.play();
+ return {mixer,action};
 }
 humanLoader.load(humanAssetUrl,gltf=>{
  realHumanTemplate=gltf.scene;
- installRealHuman(realHumanTemplate,player,'#536c79','#d7c7a6');
+ const playerModel=installRealHuman(realHumanTemplate,player,'#536c79','#d7c7a6');
+ const playerAnim=startModelAnimation(playerModel,gltf.animations,['walk','run','idle']);
+ if(playerAnim){playerMixer=playerAnim.mixer;playerWalkAction=playerAnim.action;playerWalkAction.paused=true;}
  humanModelReady=true;
  hint.textContent='Human character model loaded. Explore the hills beyond the inn.';
  const existingShepherd=scene.getObjectByProperty('userData.kind','shepherd');
  if(existingShepherd&&realHumanTemplate){
    const replacement=new THREE.Group();replacement.position.copy(existingShepherd.position);replacement.userData.kind='shepherd';
    scene.remove(existingShepherd);scene.add(replacement);
-   installRealHuman(realHumanTemplate.clone(true),replacement,'#826349','#c8b18a');
+   const shepherdModel=installRealHuman(cloneSkinned(realHumanTemplate),replacement,'#826349','#c8b18a');
+   const shepherdAnim=startModelAnimation(shepherdModel,gltf.animations,['idle','stand','walk']);
+   if(shepherdAnim){shepherdMixer=shepherdAnim.mixer;shepherdIdleAction=shepherdAnim.action;}
    replacement.rotation.y=Math.PI;
    window.kingdomShepherd=replacement;
  }
@@ -110,6 +123,6 @@ document.getElementById('interact').onclick=interact;document.getElementById('ru
 document.querySelectorAll('[data-dir]').forEach(b=>{const d=b.dataset.dir;const down=e=>{e.preventDefault();keys[d]=true},up=e=>{e.preventDefault();keys[d]=false};b.addEventListener('pointerdown',down);b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up)});
 addEventListener('keydown',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=true;if(['ArrowDown','s','S'].includes(e.key))keys.down=true;if(['ArrowLeft','a','A'].includes(e.key))keys.left=true;if(['ArrowRight','d','D'].includes(e.key))keys.right=true;if(e.key===' '||e.key==='Enter')interact()});addEventListener('keyup',e=>{if(['ArrowUp','w','W'].includes(e.key))keys.up=false;if(['ArrowDown','s','S'].includes(e.key))keys.down=false;if(['ArrowLeft','a','A'].includes(e.key))keys.left=false;if(['ArrowRight','d','D'].includes(e.key))keys.right=false});
 const clock=new THREE.Clock(),offset=new THREE.Vector3(0,6.5,10);
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(!modal){let dx=(keys.right?1:0)-(keys.left?1:0),dz=(keys.down?1:0)-(keys.up?1:0);if(dx||dz){const m=Math.hypot(dx,dz);dx/=m;dz/=m;const pace=(running?7:3.8)*dt;player.position.x=THREE.MathUtils.clamp(player.position.x+dx*pace,-35,35);player.position.z=THREE.MathUtils.clamp(player.position.z+dz*pace,-40,20);player.rotation.y=Math.atan2(dx,dz);const swing=Math.sin(clock.elapsedTime*10)*(running?.45:.22);legs[0].rotation.x=swing;legs[1].rotation.x=-swing;arms[0].rotation.x=-swing*.7;arms[1].rotation.x=swing*.7;body.position.y=1.16+Math.abs(swing)*.04}else {legs.forEach(l=>l.rotation.x=0);arms.forEach(a=>a.rotation.x=0)}}const target=player.position.clone().add(new THREE.Vector3(0,1.2,0)),desired=target.clone().add(offset.clone().applyAxisAngle(new THREE.Vector3(0,1,0),player.rotation.y*.25));camera.position.lerp(desired,.09);camera.lookAt(target.clone().add(new THREE.Vector3(0,.25,-2)));renderer.render(scene,camera);hint.textContent=Math.hypot(player.position.x-(window.kingdomShepherd||shepherd).position.x,player.position.z-(window.kingdomShepherd||shepherd).position.z)<3.4?'Tap TALK / INTERACT to speak with the shepherd.':'Explore the hills beyond the inn. Use the arrows to move.'}
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(playerMixer)playerMixer.update(dt);if(shepherdMixer)shepherdMixer.update(dt);if(!modal){let dx=(keys.right?1:0)-(keys.left?1:0),dz=(keys.down?1:0)-(keys.up?1:0);if(dx||dz){if(playerWalkAction){playerWalkAction.paused=false;playerWalkAction.timeScale=running?1.35:1;}const m=Math.hypot(dx,dz);dx/=m;dz/=m;const pace=(running?7:3.8)*dt;player.position.x=THREE.MathUtils.clamp(player.position.x+dx*pace,-35,35);player.position.z=THREE.MathUtils.clamp(player.position.z+dz*pace,-40,20);player.rotation.y=Math.atan2(dx,dz);const swing=Math.sin(clock.elapsedTime*10)*(running?.45:.22);legs[0].rotation.x=swing;legs[1].rotation.x=-swing;arms[0].rotation.x=-swing*.7;arms[1].rotation.x=swing*.7;body.position.y=1.16+Math.abs(swing)*.04}else {if(playerWalkAction)playerWalkAction.paused=true;legs.forEach(l=>l.rotation.x=0);arms.forEach(a=>a.rotation.x=0)}}const target=player.position.clone().add(new THREE.Vector3(0,1.2,0)),desired=target.clone().add(offset.clone().applyAxisAngle(new THREE.Vector3(0,1,0),player.rotation.y*.25));camera.position.lerp(desired,.09);camera.lookAt(target.clone().add(new THREE.Vector3(0,.25,-2)));renderer.render(scene,camera);hint.textContent=Math.hypot(player.position.x-(window.kingdomShepherd||shepherd).position.x,player.position.z-(window.kingdomShepherd||shepherd).position.z)<3.4?'Tap TALK / INTERACT to speak with the shepherd.':'Explore the hills beyond the inn. Use the arrows to move.'}
 animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5))});
 </script></body></html>
