@@ -36,51 +36,34 @@ for(let i=0;i<groundPos.count;i++){
   groundPos.setZ(i,broad+fine+edge*(Math.sin(z*.16+x*.07)*.42+Math.cos(z*.12)*.24));
 }
 ground.geometry.computeVertexNormals();scene.add(ground);
-// Distant mountains are built as closed, filled cross-sections extruded into depth.
-// This replaces the previous sheet-like surfaces that produced visible ribbon edges.
-function makeMountainRange(opts){
-  const {centerZ,width,depth,baseY,height,color,seed}=opts;
-  let s=seed;const rand=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
-  const nx=180,positions=[],indices=[];
-  const peaks=[];
-  for(let p=0;p<28;p++)peaks.push({x:(rand()-.5)*width*.94,w:9+rand()*17,h:height*(.22+rand()*.72)});
-  const ridge=[];
-  for(let i=0;i<=nx;i++){
-    const x=(i/nx-.5)*width;
-    let y=baseY+height*.12;
-    for(const p of peaks){const q=(x-p.x)/p.w;y+=p.h*Math.exp(-q*q*.82)}
-    y+=(Math.sin(x*.045+seed)*.5+Math.cos(x*.025-seed)*.35)*height*.1;
-    ridge.push({x,y});
-  }
-  // Front and rear profiles each have a ridge line and a deep base line, closing the mountain volume.
-  const zFront=centerZ+depth*.5,zBack=centerZ-depth*.5,base=baseY-height*.75;
-  for(const z of [zFront,zBack]){
-    for(const p of ridge)positions.push(p.x,p.y,z);
-    for(const p of ridge)positions.push(p.x,base,z);
-  }
-  const stride=(nx+1)*2,backOffset=stride;
-  for(let i=0;i<nx;i++){
-    const ft=i*2,ftn=ft+2,fb=ft+1,fbn=ft+3;
-    indices.push(ft,ftn,fb,ftn,fbn,fb);
-    const bt=backOffset+ft,btn=backOffset+ftn,bb=backOffset+fb,bbn=backOffset+fbn;
-    indices.push(bt,bb,btn,btn,bb,bbn);
-    // Close the front-to-back volume along the ridge and base edges.
-    indices.push(ft,bt,ftn,ftn,bt,btn);
-    indices.push(fb,fbn,bb,fb,bb,bbn);
-  }
-  // Close both ends of the extrusion so there are no open ribbon edges.
-  for(const i of [0,nx]){
-    const t=i*2,b=t+1,bt=backOffset+t,bb=backOffset+b;
-    indices.push(t,b,bt,b,bb,bt);
-  }
-  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
-  const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,roughness:1,flatShading:false,side:THREE.DoubleSide}));
-  mesh.receiveShadow=true;scene.add(mesh);
+// Remove the faulty mountain meshes that were creating oversized ribbon-like faces.
+// Use low, smooth, fully rounded distant hills that sit below the skyline instead.
+const distantHillMat1=new THREE.MeshStandardMaterial({color:'#b5b8ad',roughness:1});
+const distantHillMat2=new THREE.MeshStandardMaterial({color:'#a0a797',roughness:1});
+const distantHillMat3=new THREE.MeshStandardMaterial({color:'#87917b',roughness:1});
+const distantHillMat4=new THREE.MeshStandardMaterial({color:'#748268',roughness:1});
+function addDistantHill(x,y,z,sx,sy,sz,mat,seed){
+  const hill=new THREE.Mesh(new THREE.SphereGeometry(1,32,20),mat);
+  hill.scale.set(sx,sy,sz);hill.position.set(x,y,z);
+  hill.rotation.z=Math.sin(seed)*.04;hill.receiveShadow=true;scene.add(hill);
 }
-makeMountainRange({centerZ:-111,width:245,depth:30,baseY:-2.4,height:7,color:'#b7b7af',seed:19});
-makeMountainRange({centerZ:-91,width:220,depth:31,baseY:-2.7,height:9,color:'#a5a798',seed:37});
-makeMountainRange({centerZ:-71,width:195,depth:32,baseY:-3.1,height:11,color:'#8e9582',seed:53});
-makeMountainRange({centerZ:-52,width:170,depth:33,baseY:-3.5,height:12,color:'#7a856d',seed:71});
+// Broad low silhouettes overlap into continuous rolling landforms without crossing the upper sky.
+for(let i=0;i<9;i++){
+  const x=-90+i*22;
+  addDistantHill(x,-2.8,-108-(i%3)*3,19,5.5,9,distantHillMat1,i+1);
+}
+for(let i=0;i<9;i++){
+  const x=-88+i*22;
+  addDistantHill(x,-3.2,-88-(i%2)*3,18,6.5,10,distantHillMat2,i+11);
+}
+for(let i=0;i<8;i++){
+  const x=-77+i*22;
+  addDistantHill(x,-3.7,-68-(i%3)*2,17,7,11,distantHillMat3,i+21);
+}
+for(let i=0;i<7;i++){
+  const x=-66+i*22;
+  addDistantHill(x,-4.2,-50-(i%2)*2,16,7.5,12,distantHillMat4,i+31);
+}
 /* Oversized green mounds removed to keep the playable landscape open. */
 const stoneMat=material('#b9b09a');const stoneEdge=material('#8d8876');const stonePts=[[0,13],[.25,10],[.55,7],[1.2,4],[2.4,1],[4,-2],[5.8,-5],[6.8,-8],[6.5,-11],[5.2,-14],[3.4,-17],[1.7,-20],[.5,-23],[0,-26],[0,-28]];stonePts.forEach((p,i)=>{const stone=new THREE.Mesh(new THREE.CylinderGeometry(.72+Math.sin(i*2.3)*.08,.82, .18, 7),i%3===0?stoneEdge:stoneMat);stone.position.set(p[0]+Math.sin(i*1.7)*.38,.055,p[1]);stone.rotation.y=(i%2?-.12:.18);stone.scale.set(1.18,.72,.78);stone.castShadow=true;stone.receiveShadow=true;scene.add(stone)});
 for(let i=0;i<12;i++){const x=-24+(i%6)*9,z=-27-Math.floor(i/6)*9;cube(x,1.2,z,3.5,2.4,3,'#d8c6a4');roof(x,3,z,2.6,1.8,'#92684b');cube(x,.7,z+1.55,.7,1.4,.12,'#594333')}
