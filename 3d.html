@@ -36,18 +36,39 @@ for(let i=0;i<groundPos.count;i++){
   groundPos.setZ(i,broad+fine+edge*(Math.sin(z*.16+x*.07)*.42+Math.cos(z*.12)*.24));
 }
 ground.geometry.computeVertexNormals();scene.add(ground);
-// Layered, low rocky shoulders create a rolling Judean-hills silhouette at the sides.
-// These remain outside the central walking route and do not block the play area.
-for(let side of [-1,1]){
-  for(let i=0;i<5;i++){
-    const ridge=new THREE.Mesh(new THREE.IcosahedronGeometry(1,2),material((i+ (side>0?1:0))%2?'#8f9873':'#aaa17c'));
-    ridge.scale.set(7+terrainRand()*5,1.8+terrainRand()*1.8,5+terrainRand()*4);
-    ridge.position.set(side*(25+i*2.8),-.25,-31+i*10);
-    ridge.rotation.y=terrainRand()*Math.PI;
-    ridge.receiveShadow=true;scene.add(ridge);
+// Distant mountain ranges use custom ridge meshes rather than primitive spheres.
+// Overlapping silhouettes, irregular peaks, and atmospheric colors create depth like the reference landscape.
+function makeMountainRange(opts){
+  const nx=100,nz=12,positions=[],indices=[];
+  const {centerZ,width,depth,baseY,height,color,seed}=opts;
+  const peaks=[];
+  let s=seed;const rand=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
+  for(let p=0;p<17;p++)peaks.push({x:(rand()-.5)*width*1.08,w:4+rand()*10,h:height*(.28+rand()*.72)});
+  for(let iz=0;iz<=nz;iz++){
+    const v=iz/nz,z=centerZ+(v-.5)*depth;
+    for(let ix=0;ix<=nx;ix++){
+      const u=ix/nx,x=(u-.5)*width;
+      let silhouette=0;
+      for(const p of peaks){const q=(x-p.x)/p.w;silhouette+=p.h*Math.exp(-q*q*1.2)}
+      const frontFade=.78+.22*Math.cos(v*Math.PI*2);
+      const rugged=(Math.sin(x*.21+seed)*.35+Math.sin(x*.47+seed*2)*.13+Math.cos(x*.09-seed)*.25);
+      const y=baseY+silhouette*frontFade+Math.max(0,silhouette*.12)*rugged;
+      positions.push(x,y,z+Math.sin(x*.035+seed)*.9);
+    }
   }
+  for(let iz=0;iz<nz;iz++)for(let ix=0;ix<nx;ix++){
+    const a=iz*(nx+1)+ix,b=a+1,c=a+(nx+1),d=c+1;
+    indices.push(a,c,b,b,c,d);
+  }
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
+  const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true,side:THREE.DoubleSide}));
+  mesh.receiveShadow=true;scene.add(mesh);
 }
-for(let i=0;i<9;i++){const ridge=new THREE.Mesh(new THREE.SphereGeometry(1,18,12),material(i%2?'#8f9873':'#aaa17c'));ridge.scale.set(10+terrainRand()*9,1.5+terrainRand()*2,5+terrainRand()*4);ridge.position.set(-52+i*13,-.35,-48-terrainRand()*12);ridge.receiveShadow=true;scene.add(ridge)}
+// Far blue-lavender silhouettes fade into the sky; nearer ridges are warmer and more detailed.
+makeMountainRange({centerZ:-88,width:210,depth:9,baseY:1,height:7,color:'#a6a7a0',seed:19});
+makeMountainRange({centerZ:-73,width:190,depth:9,baseY:.1,height:9,color:'#96988c',seed:37});
+makeMountainRange({centerZ:-60,width:170,depth:10,baseY:-.2,height:10,color:'#858b77',seed:53});
+makeMountainRange({centerZ:-48,width:150,depth:11,baseY:-.45,height:8,color:'#737e65',seed:71});
 /* Oversized green mounds removed to keep the playable landscape open. */
 const stoneMat=material('#b9b09a');const stoneEdge=material('#8d8876');const stonePts=[[0,13],[.25,10],[.55,7],[1.2,4],[2.4,1],[4,-2],[5.8,-5],[6.8,-8],[6.5,-11],[5.2,-14],[3.4,-17],[1.7,-20],[.5,-23],[0,-26],[0,-28]];stonePts.forEach((p,i)=>{const stone=new THREE.Mesh(new THREE.CylinderGeometry(.72+Math.sin(i*2.3)*.08,.82, .18, 7),i%3===0?stoneEdge:stoneMat);stone.position.set(p[0]+Math.sin(i*1.7)*.38,.055,p[1]);stone.rotation.y=(i%2?-.12:.18);stone.scale.set(1.18,.72,.78);stone.castShadow=true;stone.receiveShadow=true;scene.add(stone)});
 for(let i=0;i<12;i++){const x=-24+(i%6)*9,z=-27-Math.floor(i/6)*9;cube(x,1.2,z,3.5,2.4,3,'#d8c6a4');roof(x,3,z,2.6,1.8,'#92684b');cube(x,.7,z+1.55,.7,1.4,.12,'#594333')}
